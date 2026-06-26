@@ -89,4 +89,4 @@ python -m pytest tests/test_medgemma_output_contract.py -q
 
 ## 참고
 
-이 저장소는 포트폴리오 검토용으로 정리한 snapshot입니다. 팀 프로젝트의 모든 작업 이력이나 운영 환경을 그대로 포함하지 않습니다.
+이 저장소는 포트폴리오용으로 정리한 snapshot입니다. 프로젝트의 모든 작업 이력이나 운영 환경을 그대로 포함하지 않습니다.
