@@ -1,0 +1,172 @@
+[
+  {
+    "id": "scenario_001",
+    "title": "고당류 식단 반복과 트러블성 시각 신호 증가",
+    "description": "리포트가 식단과 피부 변화를 단정하지 않고 후보 근거로만 설명해야 한다.",
+    "skin_logs": [{"date": "2026-06-12", "score": 70, "tags": ["acne"]}],
+    "diet_logs": [{"date": "2026-06-11", "sugar_intake": "high"}],
+    "cosmetics": [],
+    "medications": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "medgemma_results": [{"date": "2026-06-12", "usable": true, "recommendation": "use", "confidence": "high", "observations": {"acne_like_spots": {"level": "moderate"}}}],
+    "expected": {
+      "should_generate_visual_trend": true,
+      "expected_dominant_signals": ["acne_like_spots"],
+      "must_not_claim": ["진단", "치료", "확정적 인과관계"]
+    }
+  },
+  {
+    "id": "scenario_002",
+    "title": "낮은 습도 + 건조 태그 증가 + MedGemma dryness 증가",
+    "description": "환경 요인과 건조함의 상관관계를 조심스럽게 언급",
+    "skin_logs": [{"date": "2026-06-12", "score": 60, "tags": ["dry"]}],
+    "diet_logs": [],
+    "cosmetics": [],
+    "medications": [],
+    "environment_logs": [{"date": "2026-06-11", "humidity": "low"}],
+    "behavior_logs": [],
+    "medgemma_results": [{"date": "2026-06-12", "usable": true, "recommendation": "use", "confidence": "high", "observations": {"dryness": {"level": "high"}}}],
+    "expected": {
+      "should_generate_visual_trend": true,
+      "expected_dominant_signals": ["dryness"],
+      "must_not_claim": ["진단", "확정적 인과관계"]
+    }
+  },
+  {
+    "id": "scenario_003",
+    "title": "새 화장품 시작 + 붉은기 태그 증가 + MedGemma redness 증가",
+    "description": "새 화장품과 붉은기의 동시 발생을 관찰적 근거로 제시",
+    "skin_logs": [{"date": "2026-06-12", "score": 65, "tags": ["redness"]}],
+    "diet_logs": [],
+    "cosmetics": [{"date": "2026-06-10", "event": "new_product"}],
+    "medications": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "medgemma_results": [{"date": "2026-06-12", "usable": true, "recommendation": "use", "confidence": "high", "observations": {"redness": {"level": "moderate"}}}],
+    "expected": {
+      "should_generate_visual_trend": true,
+      "expected_dominant_signals": ["redness"],
+      "must_not_claim": ["부작용 단정", "치료"]
+    }
+  },
+  {
+    "id": "scenario_004",
+    "title": "수면 부족/스트레스 증가 + 피부 점수 하락, MedGemma 변화 없음",
+    "description": "행동 로그에 원인이 있고 시각적 신호는 약한 경우",
+    "skin_logs": [{"date": "2026-06-12", "score": 50, "tags": ["tired"]}],
+    "diet_logs": [],
+    "cosmetics": [],
+    "medications": [],
+    "environment_logs": [],
+    "behavior_logs": [{"date": "2026-06-11", "sleep": "poor", "stress": "high"}],
+    "medgemma_results": [{"date": "2026-06-12", "usable": true, "recommendation": "use", "confidence": "high", "observations": {"redness": {"level": "none"}, "acne_like_spots": {"level": "none"}}}],
+    "expected": {
+      "should_generate_visual_trend": true,
+      "expected_dominant_signals": [],
+      "must_not_claim": ["진단"]
+    }
+  },
+  {
+    "id": "scenario_005",
+    "title": "사진 품질 낮음 + MedGemma reject/review",
+    "description": "품질 문제로 MedGemma 신호를 트렌드에서 제외해야 함",
+    "skin_logs": [{"date": "2026-06-12", "score": 70, "tags": []}],
+    "diet_logs": [],
+    "cosmetics": [],
+    "medications": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "medgemma_results": [{"date": "2026-06-12", "usable": false, "recommendation": "reject", "confidence": "low", "observations": {"redness": {"level": "high"}}}],
+    "expected": {
+      "should_generate_visual_trend": false,
+      "expected_dominant_signals": [],
+      "must_not_claim": ["진단"]
+    }
+  },
+  {
+    "id": "scenario_006",
+    "title": "사용자는 유분만 선택했지만 MedGemma는 redness 관찰",
+    "description": "사용자 주관적 기록과 객관적 보조 신호가 다를 때 병렬로 제시",
+    "skin_logs": [{"date": "2026-06-12", "score": 60, "tags": ["oily"]}],
+    "diet_logs": [],
+    "cosmetics": [],
+    "medications": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "medgemma_results": [{"date": "2026-06-12", "usable": true, "recommendation": "use", "confidence": "high", "observations": {"redness": {"level": "mild"}}}],
+    "expected": {
+      "should_generate_visual_trend": true,
+      "expected_dominant_signals": ["redness"],
+      "must_not_claim": ["진단"]
+    }
+  },
+  {
+    "id": "scenario_007",
+    "title": "피부 점수는 낮지만 MedGemma 신호 없음",
+    "description": "시각적 문제 외의 요인(예: 가려움, 따가움 등)으로 인한 점수 하락",
+    "skin_logs": [{"date": "2026-06-12", "score": 30, "tags": ["itchy"]}],
+    "diet_logs": [],
+    "cosmetics": [],
+    "medications": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "medgemma_results": [{"date": "2026-06-12", "usable": true, "recommendation": "use", "confidence": "high", "observations": {}}],
+    "expected": {
+      "should_generate_visual_trend": true,
+      "expected_dominant_signals": [],
+      "must_not_claim": ["진단"]
+    }
+  },
+  {
+    "id": "scenario_008",
+    "title": "식단 기록은 많지만 피부 변화 없음",
+    "description": "트리거가 될 만한 행동이 있지만 실제 피부 변화/관찰은 없음",
+    "skin_logs": [{"date": "2026-06-12", "score": 90, "tags": ["good"]}],
+    "diet_logs": [{"date": "2026-06-11", "sugar_intake": "high"}, {"date": "2026-06-10", "spicy": true}],
+    "cosmetics": [],
+    "medications": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "medgemma_results": [{"date": "2026-06-12", "usable": true, "recommendation": "use", "confidence": "high", "observations": {}}],
+    "expected": {
+      "should_generate_visual_trend": true,
+      "expected_dominant_signals": [],
+      "must_not_claim": ["진단"]
+    }
+  },
+  {
+    "id": "scenario_009",
+    "title": "의약품 사용 시작 후 점수 변화 있으나 MedGemma confidence 낮음",
+    "description": "보조 신호의 신뢰도가 낮으므로 조심스럽게 언급하거나 제외",
+    "skin_logs": [{"date": "2026-06-12", "score": 55, "tags": []}],
+    "diet_logs": [],
+    "cosmetics": [],
+    "medications": [{"date": "2026-06-10", "event": "started_medication"}],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "medgemma_results": [{"date": "2026-06-12", "usable": true, "recommendation": "review", "confidence": "low", "observations": {"texture_irregularity": {"level": "moderate"}}}],
+    "expected": {
+      "should_generate_visual_trend": true,
+      "expected_dominant_signals": ["texture_irregularity"],
+      "must_not_claim": ["의학적 효과 단정", "부작용 확정"]
+    }
+  },
+  {
+    "id": "scenario_010",
+    "title": "MedGemma 결과 없이 기존 로그만 있는 사용자",
+    "description": "MedGemma 데이터가 아예 없을 때 기본 리포트 기능이 깨지지 않아야 함",
+    "skin_logs": [{"date": "2026-06-12", "score": 70, "tags": ["acne"]}],
+    "diet_logs": [],
+    "cosmetics": [],
+    "medications": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "medgemma_results": [],
+    "expected": {
+      "should_generate_visual_trend": false,
+      "expected_dominant_signals": [],
+      "must_not_claim": ["진단"]
+    }
+  }
+]

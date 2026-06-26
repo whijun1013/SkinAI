@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+.expo-export-test/
+.expo-tmp-bundle/
+.expo-tmp-export-check/
+dist/
+build/
+.env
+*.log
+.DS_Store

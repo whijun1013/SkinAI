@@ -1,0 +1,29 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: blue
+endpoint_name: medgemma-face-observation
+code_configuration:
+  code: .
+  scoring_script: score.py
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-cuda11.8-cudnn8-ubuntu22.04:latest
+  conda_file: conda.yml
+instance_type: Standard_NC4as_T4_v3
+instance_count: 1
+request_settings:
+  request_timeout_ms: 180000
+liveness_probe:
+  initial_delay: 600
+  period: 30
+  timeout: 2
+  success_threshold: 1
+  failure_threshold: 30
+readiness_probe:
+  initial_delay: 600
+  period: 30
+  timeout: 2
+  success_threshold: 1
+  failure_threshold: 30
+environment_variables:
+  MEDGEMMA_MODEL_NAME: google/medgemma-4b-it
+  MEDGEMMA_USE_FAST_PROCESSOR: "true"
+  HF_TOKEN: ""

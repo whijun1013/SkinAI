@@ -1,0 +1,740 @@
+[
+  {
+    "name": "우유",
+    "normalized_name": "우유",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:우유"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "원유",
+    "normalized_name": "원유",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:원유"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "탈지분유",
+    "normalized_name": "탈지분유",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:탈지분유"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "전지분유",
+    "normalized_name": "전지분유",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:전지분유"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "혼합분유",
+    "normalized_name": "혼합분유",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:혼합분유"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "유청",
+    "normalized_name": "유청",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:유청"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "유청분말",
+    "normalized_name": "유청분말",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:유청분말"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "유청단백",
+    "normalized_name": "유청단백",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:유청단백"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "카제인",
+    "normalized_name": "카제인",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:카제인"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "카제인나트륨",
+    "normalized_name": "카제인나트륨",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:카제인나트륨"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "유당",
+    "normalized_name": "유당",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:유당"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "버터",
+    "normalized_name": "버터",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:버터"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "버터오일",
+    "normalized_name": "버터오일",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:버터오일"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "치즈",
+    "normalized_name": "치즈",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:치즈"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "크림치즈",
+    "normalized_name": "크림치즈",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:크림치즈"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "유크림",
+    "normalized_name": "유크림",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:유크림"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "생크림",
+    "normalized_name": "생크림",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:생크림"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "연유",
+    "normalized_name": "연유",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "dairy_confirmed",
+        "label": "유제품",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:연유"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "크림",
+    "normalized_name": "크림",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "possible_dairy",
+        "label": "유제품(추정)",
+        "level": "medium",
+        "confidence": "low",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:크림"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "라떼",
+    "normalized_name": "라떼",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "possible_dairy",
+        "label": "유제품(추정)",
+        "level": "medium",
+        "confidence": "low",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:라떼"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "밀크",
+    "normalized_name": "밀크",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "possible_dairy",
+        "label": "유제품(추정)",
+        "level": "medium",
+        "confidence": "low",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:밀크"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "아이스크림",
+    "normalized_name": "아이스크림",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "possible_dairy",
+        "label": "유제품(추정)",
+        "level": "medium",
+        "confidence": "low",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:아이스크림"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "요거트",
+    "normalized_name": "요거트",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "possible_dairy",
+        "label": "유제품(추정)",
+        "level": "medium",
+        "confidence": "low",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:요거트"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "요구르트",
+    "normalized_name": "요구르트",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "possible_dairy",
+        "label": "유제품(추정)",
+        "level": "medium",
+        "confidence": "low",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:요구르트"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "햄",
+    "normalized_name": "햄",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "processed_meat",
+        "label": "가공육",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:햄"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "소시지",
+    "normalized_name": "소시지",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "processed_meat",
+        "label": "가공육",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:소시지"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "베이컨",
+    "normalized_name": "베이컨",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "processed_meat",
+        "label": "가공육",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:베이컨"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "살라미",
+    "normalized_name": "살라미",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "processed_meat",
+        "label": "가공육",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:살라미"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "런천미트",
+    "normalized_name": "런천미트",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "processed_meat",
+        "label": "가공육",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:런천미트"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "프레스햄",
+    "normalized_name": "프레스햄",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "processed_meat",
+        "label": "가공육",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:프레스햄"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "주정",
+    "normalized_name": "주정",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "alcohol_histamine",
+        "label": "주류(알코올/히스타민)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:주정"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "알코올",
+    "normalized_name": "알코올",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "alcohol_histamine",
+        "label": "주류(알코올/히스타민)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:알코올"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "맥주",
+    "normalized_name": "맥주",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "alcohol_histamine",
+        "label": "주류(알코올/히스타민)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:맥주"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "와인",
+    "normalized_name": "와인",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "alcohol_histamine",
+        "label": "주류(알코올/히스타민)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:와인"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "막걸리",
+    "normalized_name": "막걸리",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "alcohol_histamine",
+        "label": "주류(알코올/히스타민)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:막걸리"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "소주",
+    "normalized_name": "소주",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "alcohol_histamine",
+        "label": "주류(알코올/히스타민)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:소주"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "튀김",
+    "normalized_name": "튀김",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "fried_or_high_ages",
+        "label": "튀김/직화(AGEs)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:튀김"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "프라이드",
+    "normalized_name": "프라이드",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "fried_or_high_ages",
+        "label": "튀김/직화(AGEs)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:프라이드"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "구이",
+    "normalized_name": "구이",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "fried_or_high_ages",
+        "label": "튀김/직화(AGEs)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:구이"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "직화",
+    "normalized_name": "직화",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "fried_or_high_ages",
+        "label": "튀김/직화(AGEs)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:직화"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  },
+  {
+    "name": "크리스피",
+    "normalized_name": "크리스피",
+    "aliases": [],
+    "skin_factors": [
+      {
+        "key": "fried_or_high_ages",
+        "label": "튀김/직화(AGEs)",
+        "level": "high",
+        "confidence": "high",
+        "source": "raw_material_dictionary",
+        "evidence": [
+          "raw_material:크리스피"
+        ]
+      }
+    ],
+    "source": "local_seed"
+  }
+]

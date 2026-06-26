@@ -1,0 +1,518 @@
+[
+  {
+    "id": "dairy_acne_next_day",
+    "title": "유제품 섭취 후 다음날 점수 하락 + MedGemma acne_like_spots 증가",
+    "description": "유제품 섭취 다음날 피부 점수가 낮아지고 사진 기반 분석에서 여드름성 반점이 관찰되는 케이스",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": true,
+      "has_visual_observation_trends": true,
+      "expected_experiment_factor_types": [
+        "food"
+      ],
+      "must_not_create_factor_types": [
+        "medgemma",
+        "environment",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [
+        "food"
+      ],
+      "documented_future_factor_types": []
+    },
+    "timeline": {
+      "exposure_days": [
+        0,
+        4,
+        8
+      ],
+      "low_score_days": [
+        1,
+        5,
+        9
+      ],
+      "diet_flags": [
+        "dairy"
+      ],
+      "behavior": {
+        "sleep_hours": 8.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": {
+        "source": "medgemma",
+        "recommendation": "use",
+        "usable": true,
+        "confidence": "high",
+        "observations": {
+          "acne_like_spots": {
+            "level": "moderate"
+          }
+        },
+        "visual_assessment_role": "primary_skin_visual_interpretation",
+        "primary_visual_summary": "Acne spots detected."
+      }
+    }
+  },
+  {
+    "id": "high_sugar_acne_next_day",
+    "title": "고당류 식단 후 점수 하락 + MedGemma acne_like_spots 증가",
+    "description": "고당류 섭취 후 피부 점수 하락, 여드름성 반점 관찰됨",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": true,
+      "has_visual_observation_trends": true,
+      "expected_experiment_factor_types": [
+        "food"
+      ],
+      "must_not_create_factor_types": [
+        "medgemma",
+        "environment",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [
+        "food"
+      ],
+      "documented_future_factor_types": []
+    },
+    "timeline": {
+      "exposure_days": [
+        2,
+        6,
+        10
+      ],
+      "low_score_days": [
+        3,
+        7,
+        11
+      ],
+      "diet_flags": [
+        "high_sugar"
+      ],
+      "behavior": {
+        "sleep_hours": 8.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": {
+        "source": "medgemma",
+        "recommendation": "use",
+        "usable": true,
+        "confidence": "high",
+        "observations": {
+          "acne_like_spots": {
+            "level": "high"
+          }
+        },
+        "visual_assessment_role": "primary_skin_visual_interpretation",
+        "primary_visual_summary": "Severe acne spots detected."
+      }
+    }
+  },
+  {
+    "id": "low_humidity_dryness_visual",
+    "title": "낮은 습도 지속 + MedGemma dryness 증가",
+    "description": "건조한 환경 지속 후 점수 하락, 사진에서 dryness 발견",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": true,
+      "has_visual_observation_trends": true,
+      "expected_experiment_factor_types": [],
+      "must_not_create_factor_types": [
+        "environment",
+        "medgemma",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [],
+      "documented_future_factor_types": [
+        "environment"
+      ]
+    },
+    "timeline": {
+      "exposure_days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "low_score_days": [
+        6,
+        7,
+        8
+      ],
+      "diet_flags": [],
+      "environment": {
+        "humidity": 20
+      },
+      "behavior": {
+        "sleep_hours": 8.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": {
+        "source": "medgemma",
+        "recommendation": "use",
+        "usable": true,
+        "confidence": "high",
+        "observations": {
+          "dryness": {
+            "level": "high"
+          }
+        },
+        "visual_assessment_role": "primary_skin_visual_interpretation",
+        "primary_visual_summary": "Dryness detected."
+      }
+    }
+  },
+  {
+    "id": "new_cosmetic_redness_visual",
+    "title": "새 화장품 시작 후 redness 증가",
+    "description": "새 화장품 사용 후 붉은기 증가, 사진에서 redness 발견",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": true,
+      "has_visual_observation_trends": true,
+      "expected_experiment_factor_types": [],
+      "must_not_create_factor_types": [
+        "cosmetic",
+        "medgemma",
+        "environment",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [],
+      "documented_future_factor_types": [
+        "cosmetic"
+      ]
+    },
+    "timeline": {
+      "exposure_days": [
+        10,
+        11,
+        12
+      ],
+      "low_score_days": [
+        11,
+        12,
+        13
+      ],
+      "diet_flags": [],
+      "cosmetic": {
+        "started_new_product": true
+      },
+      "behavior": {
+        "sleep_hours": 8.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": {
+        "source": "medgemma",
+        "recommendation": "use",
+        "usable": true,
+        "confidence": "high",
+        "observations": {
+          "redness": {
+            "level": "moderate"
+          }
+        },
+        "visual_assessment_role": "primary_skin_visual_interpretation",
+        "primary_visual_summary": "Redness observed."
+      }
+    }
+  },
+  {
+    "id": "low_sleep_score_drop_no_visual_change",
+    "title": "수면 부족/스트레스 증가 + 점수 하락 + MedGemma 변화 없음",
+    "description": "수면 부족으로 점수 하락하지만 MedGemma에서 특이점 없음",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": false,
+      "has_visual_observation_trends": false,
+      "expected_experiment_factor_types": [
+        "behavior"
+      ],
+      "must_not_create_factor_types": [
+        "medgemma",
+        "environment",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [
+        "behavior"
+      ],
+      "documented_future_factor_types": []
+    },
+    "timeline": {
+      "exposure_days": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "low_score_days": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "diet_flags": [],
+      "behavior": {
+        "sleep_hours": 4.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": null
+    }
+  },
+  {
+    "id": "rejected_photo_score_drop",
+    "title": "사진 품질 reject + 사용자 점수 하락",
+    "description": "사진은 reject되었으나 점수 하락하여 분석은 수행됨",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": false,
+      "has_visual_observation_trends": false,
+      "expected_experiment_factor_types": [
+        "behavior"
+      ],
+      "must_not_create_factor_types": [
+        "medgemma",
+        "environment",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [
+        "behavior"
+      ],
+      "documented_future_factor_types": []
+    },
+    "timeline": {
+      "exposure_days": [
+        1,
+        2,
+        3
+      ],
+      "low_score_days": [
+        2,
+        3,
+        4
+      ],
+      "diet_flags": [],
+      "behavior": {
+        "sleep_hours": 3.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": {
+        "source": "medgemma",
+        "recommendation": "reject",
+        "usable": false,
+        "confidence": "low",
+        "observations": {}
+      }
+    }
+  },
+  {
+    "id": "visual_worse_no_user_tags",
+    "title": "MedGemma는 악화 신호 있음 + 사용자 태그 없음",
+    "description": "사용자가 특별히 태그를 남기지 않았지만 MedGemma에서 악화 관찰",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": true,
+      "has_visual_observation_trends": true,
+      "expected_experiment_factor_types": [],
+      "must_not_create_factor_types": [
+        "medgemma",
+        "environment",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [],
+      "documented_future_factor_types": []
+    },
+    "timeline": {
+      "exposure_days": [],
+      "low_score_days": [
+        13
+      ],
+      "diet_flags": [],
+      "behavior": {
+        "sleep_hours": 8.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": {
+        "source": "medgemma",
+        "recommendation": "use",
+        "usable": true,
+        "confidence": "high",
+        "observations": {
+          "redness": {
+            "level": "high"
+          }
+        },
+        "visual_assessment_role": "primary_skin_visual_interpretation",
+        "primary_visual_summary": "Significant redness."
+      }
+    }
+  },
+  {
+    "id": "user_tags_worse_no_visual_change",
+    "title": "사용자 태그는 악화 + MedGemma 변화 없음",
+    "description": "사용자는 악화되었다고 평가했지만 MedGemma는 변화 없음",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": true,
+      "has_visual_observation_trends": true,
+      "expected_experiment_factor_types": [
+        "food"
+      ],
+      "must_not_create_factor_types": [
+        "medgemma",
+        "environment",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [
+        "food"
+      ],
+      "documented_future_factor_types": []
+    },
+    "timeline": {
+      "exposure_days": [
+        2,
+        7,
+        12
+      ],
+      "low_score_days": [
+        3,
+        8,
+        13
+      ],
+      "diet_flags": [
+        "dairy"
+      ],
+      "behavior": {
+        "sleep_hours": 8.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": {
+        "source": "medgemma",
+        "recommendation": "use",
+        "usable": true,
+        "confidence": "high",
+        "observations": {
+          "redness": {
+            "level": "none"
+          }
+        },
+        "visual_assessment_role": "primary_skin_visual_interpretation",
+        "primary_visual_summary": "No visual issues."
+      }
+    }
+  },
+  {
+    "id": "low_confidence_review_visual",
+    "title": "MedGemma confidence low / review + pattern discovery 정상 동작",
+    "description": "MedGemma 리뷰 필요 상태에서도 pattern discovery는 정상 동작",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": false,
+      "has_visual_observation_trends": false,
+      "expected_experiment_factor_types": [
+        "food"
+      ],
+      "must_not_create_factor_types": [
+        "medgemma",
+        "environment",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [
+        "food"
+      ],
+      "documented_future_factor_types": []
+    },
+    "timeline": {
+      "exposure_days": [
+        2,
+        7,
+        12
+      ],
+      "low_score_days": [
+        3,
+        8,
+        13
+      ],
+      "diet_flags": [
+        "dairy"
+      ],
+      "behavior": {
+        "sleep_hours": 8.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": {
+        "source": "medgemma",
+        "recommendation": "review",
+        "usable": false,
+        "confidence": "low",
+        "observations": {
+          "acne_like_spots": {
+            "level": "moderate"
+          }
+        },
+        "visual_assessment_role": "primary_skin_visual_interpretation",
+        "primary_visual_summary": "Needs review."
+      }
+    }
+  },
+  {
+    "id": "no_medgemma_results",
+    "title": "MedGemma 결과 없음 + 기존 리포트/패턴만 동작",
+    "description": "MedGemma 결과가 완전히 비어있는 경우",
+    "expected": {
+      "report_context_ok": true,
+      "has_primary_visual_context": false,
+      "has_visual_observation_trends": false,
+      "expected_experiment_factor_types": [
+        "food"
+      ],
+      "must_not_create_factor_types": [
+        "medgemma",
+        "environment",
+        "cosmetic",
+        "medication"
+      ],
+      "expected_current_pattern_factor_types": [
+        "food"
+      ],
+      "documented_future_factor_types": []
+    },
+    "timeline": {
+      "exposure_days": [
+        2,
+        7,
+        12
+      ],
+      "low_score_days": [
+        3,
+        8,
+        13
+      ],
+      "diet_flags": [
+        "dairy"
+      ],
+      "behavior": {
+        "sleep_hours": 8.0
+      },
+      "trigger_day": 13,
+      "trigger_score": 1,
+      "medgemma": null
+    }
+  }
+]
