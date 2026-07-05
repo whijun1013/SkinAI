@@ -1,0 +1,331 @@
+[
+  {
+    "user_id": 101,
+    "persona": "acne_worsening",
+    "skin_logs": [
+      {
+        "logged_at": "2026-06-01",
+        "overall_score": 4,
+        "ai_overall_score": 4,
+        "condition_tags": [],
+        "note": null,
+        "medgemma_handoff": {}
+      },
+      {
+        "logged_at": "2026-06-12",
+        "overall_score": 2,
+        "ai_overall_score": 2,
+        "condition_tags": [
+          "여드름"
+        ],
+        "note": "갑자기 여드름이 심해짐",
+        "medgemma_handoff": {
+          "usable": true,
+          "recommendation": "use",
+          "confidence": "high",
+          "observations": {
+            "acne_like_spots": {
+              "level": "high",
+              "regions": [
+                "left_cheek",
+                "right_cheek",
+                "chin"
+              ],
+              "evidence": "Multiple visible acne-like spots across cheeks and chin",
+              "uncertainty": "low"
+            }
+          }
+        }
+      }
+    ],
+    "diet_logs": [
+      {
+        "logged_at": "2026-06-10",
+        "meal": "lunch",
+        "foods": [
+          "치즈버거",
+          "감자튀김",
+          "밀크쉐이크"
+        ],
+        "flags": [
+          "high_gi",
+          "dairy"
+        ]
+      },
+      {
+        "logged_at": "2026-06-11",
+        "meal": "dinner",
+        "foods": [
+          "피자",
+          "콜라"
+        ],
+        "flags": [
+          "high_gi",
+          "dairy"
+        ]
+      }
+    ],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "current_cosmetics": [
+      {
+        "product_name": "신규 유분크림",
+        "started_at": "2026-06-09",
+        "irritant_ingredients": [
+          "미네랄오일"
+        ]
+      }
+    ],
+    "current_medications": [],
+    "expected_agent_focus": [
+      "diet",
+      "cosmetic"
+    ],
+    "expected_guardrails": [
+      "correlation_not_causation",
+      "non_diagnostic"
+    ]
+  },
+  {
+    "user_id": 102,
+    "persona": "flush_sensitive",
+    "skin_logs": [
+      {
+        "logged_at": "2026-06-12",
+        "overall_score": 2,
+        "ai_overall_score": 2,
+        "condition_tags": [
+          "붉은기",
+          "따가움"
+        ],
+        "note": "얼굴이 화끈거림",
+        "medgemma_handoff": {
+          "usable": true,
+          "recommendation": "use",
+          "confidence": "high",
+          "observations": {
+            "redness": {
+              "level": "high",
+              "regions": [
+                "left_cheek",
+                "right_cheek"
+              ],
+              "evidence": "Prominent redness on both cheeks",
+              "uncertainty": "low"
+            }
+          }
+        }
+      }
+    ],
+    "diet_logs": [],
+    "environment_logs": [
+      {
+        "logged_at": "2026-06-12",
+        "temperature": 15.0,
+        "humidity": 20.0,
+        "pm25": 10.0,
+        "uv": 1.0
+      }
+    ],
+    "behavior_logs": [],
+    "current_cosmetics": [
+      {
+        "product_name": "강한 각질제거제",
+        "started_at": "2026-06-10",
+        "irritant_ingredients": [
+          "AHA",
+          "BHA"
+        ]
+      }
+    ],
+    "current_medications": [],
+    "expected_agent_focus": [
+      "environment",
+      "cosmetic"
+    ],
+    "expected_guardrails": [
+      "correlation_not_causation",
+      "non_diagnostic"
+    ]
+  },
+  {
+    "user_id": 103,
+    "persona": "dry_tight",
+    "skin_logs": [
+      {
+        "logged_at": "2026-06-12",
+        "overall_score": 2,
+        "ai_overall_score": 5,
+        "condition_tags": [
+          "건조함",
+          "당김",
+          "따가움"
+        ],
+        "note": "피부가 찢어질 것 같음",
+        "medgemma_handoff": {
+          "usable": true,
+          "recommendation": "use",
+          "confidence": "high",
+          "observations": {
+            "redness": {
+              "level": "none"
+            },
+            "acne_like_spots": {
+              "level": "none"
+            },
+            "texture_irregularity": {
+              "level": "very_mild"
+            }
+          }
+        }
+      }
+    ],
+    "diet_logs": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "current_cosmetics": [],
+    "current_medications": [],
+    "expected_agent_focus": [
+      "user_input_priority"
+    ],
+    "expected_guardrails": [
+      "correlation_not_causation",
+      "non_diagnostic"
+    ]
+  },
+  {
+    "user_id": 104,
+    "persona": "medication_side_effect",
+    "skin_logs": [
+      {
+        "logged_at": "2026-06-01",
+        "overall_score": 4,
+        "ai_overall_score": 4,
+        "condition_tags": []
+      },
+      {
+        "logged_at": "2026-06-12",
+        "overall_score": 2,
+        "ai_overall_score": 2,
+        "condition_tags": [
+          "여드름"
+        ],
+        "medgemma_handoff": {
+          "usable": true,
+          "recommendation": "use",
+          "confidence": "high",
+          "observations": {
+            "acne_like_spots": {
+              "level": "moderate"
+            }
+          }
+        }
+      }
+    ],
+    "diet_logs": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "current_cosmetics": [],
+    "current_medications": [
+      {
+        "medication_name": "스테로이드성 약물",
+        "started_at": "2026-06-05",
+        "skin_relevant_ingredients": [
+          "스테로이드"
+        ]
+      }
+    ],
+    "expected_agent_focus": [
+      "medication"
+    ],
+    "expected_guardrails": [
+      "correlation_not_causation",
+      "non_diagnostic"
+    ]
+  },
+  {
+    "user_id": 105,
+    "persona": "poor_photo_quality",
+    "skin_logs": [
+      {
+        "logged_at": "2026-06-12",
+        "overall_score": 3,
+        "ai_overall_score": 3,
+        "condition_tags": [],
+        "medgemma_handoff": {
+          "usable": false,
+          "recommendation": "reject",
+          "confidence": "low",
+          "capture_quality": {
+            "lighting_quality": "poor",
+            "sharpness_quality": "blurry",
+            "face_angle_quality": "angled",
+            "occlusion_flags": [
+              "shadow"
+            ],
+            "quality_limitation_notes": "너무 어둡고 흔들림"
+          },
+          "observations": {}
+        }
+      }
+    ],
+    "diet_logs": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "current_cosmetics": [],
+    "current_medications": [],
+    "expected_agent_focus": [
+      "quality_warning"
+    ],
+    "expected_guardrails": [
+      "correlation_not_causation",
+      "non_diagnostic"
+    ]
+  },
+  {
+    "user_id": 106,
+    "persona": "stable_normal",
+    "skin_logs": [
+      {
+        "logged_at": "2026-06-01",
+        "overall_score": 5,
+        "ai_overall_score": 5,
+        "condition_tags": []
+      },
+      {
+        "logged_at": "2026-06-12",
+        "overall_score": 5,
+        "ai_overall_score": 5,
+        "condition_tags": [],
+        "medgemma_handoff": {
+          "usable": true,
+          "recommendation": "use",
+          "confidence": "high",
+          "observations": {
+            "redness": {
+              "level": "none"
+            },
+            "acne_like_spots": {
+              "level": "none"
+            },
+            "texture_irregularity": {
+              "level": "none"
+            }
+          }
+        }
+      }
+    ],
+    "diet_logs": [],
+    "environment_logs": [],
+    "behavior_logs": [],
+    "current_cosmetics": [],
+    "current_medications": [],
+    "expected_agent_focus": [
+      "empty"
+    ],
+    "expected_guardrails": [
+      "correlation_not_causation",
+      "non_diagnostic"
+    ]
+  }
+]

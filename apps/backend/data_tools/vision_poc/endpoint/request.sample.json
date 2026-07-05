@@ -1,0 +1,5 @@
+{
+  "model": "google/medgemma-4b-it",
+  "image_url": "https://example.com/replace-with-signed-image-url.jpg",
+  "max_tokens": 700
+}

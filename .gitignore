@@ -1,0 +1,76 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+*.sqlite
+
+# Node
+node_modules/
+.expo/
+.expo-export-test/
+.expo-tmp-bundle/
+dist/
+build/
+package-lock.json
+.expo-shared/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Uploads
+uploads/
+temp/
+
+# Test
+coverage/
+.pytest_cache/
+
+# Agent Rules & Logs
+AgentRules.md
+Notion_Work_Log.md
+.agents/
+skills-lock.json
+docs/
+
+# Project-local Vowline
+AGENTS.md
+.vowline-install-source/
+
+# Local custom ignore
+venv311/
+apps/backend/venv311/
+apps/backend/models/mediapipe/*.task
+apps/backend/models/mediapipe/*.tflite
+apps/backend/data/food_items_curated.json
+apps/backend/data/raw_material_api_cache.json
+outputs/
+temp_jeong.txt
+server.log
+test_login.json
+test_register.json
+
+.claude/settings.local.json
+PLANNING.md
+apps/backend/.artifacts/
+
+*_backup_*.sql
+luvel_backup_*.sql
+skinai_backup_*.sql
+
+apps/backend/data/cosmetic_master_seed.json
