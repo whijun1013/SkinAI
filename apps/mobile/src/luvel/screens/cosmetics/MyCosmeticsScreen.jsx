@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { cosmeticsAPI } from '../../../api/cosmetics';
+import { cosmeticsAPI, getRoutineAnalysis } from '../../../api/cosmetics';
 import { fetchPastCosmeticsTotal, useCosmeticsListQuery } from '../../../hooks/useRecordQueries';
 import useRecordCacheStore from '../../../stores/recordCacheStore';
 import RegisterDatePickerSheet from '../../components/search/RegisterDatePickerSheet';
@@ -67,6 +67,48 @@ function PastEntryRow({ count, onPress }) {
   );
 }
 
+function RoutineAnalysisBanner({ analysisResults }) {
+  if (!analysisResults || analysisResults.length === 0) return null;
+
+  const highClash = analysisResults.find(r => r.severity === 'high');
+  const topResult = highClash || analysisResults[0];
+
+  const getIcon = (severity) => {
+    if (severity === 'high') return 'warning-outline';
+    if (severity === 'medium') return 'alert-circle-outline';
+    return 'star-outline';
+  };
+
+  const getColor = (severity) => {
+    if (severity === 'high') return '#D32F2F';
+    if (severity === 'medium') return '#ED6C02';
+    return '#2E7D32';
+  };
+
+  const getBgColor = (severity) => {
+    if (severity === 'high') return '#FDEDED';
+    if (severity === 'medium') return '#FFF4E5';
+    return '#EDF7ED';
+  };
+
+  const hasMore = analysisResults.length > 1;
+
+  return (
+    <View style={[styles.routineBanner, { backgroundColor: getBgColor(topResult.severity) }]}>
+      <Ionicons name={getIcon(topResult.severity)} size={20} color={getColor(topResult.severity)} />
+      <View style={styles.routineBannerTextWrap}>
+        <Text style={[styles.routineBannerTitle, { color: getColor(topResult.severity) }]}>
+          {topResult.title}
+        </Text>
+        <Text style={styles.routineBannerMessage}>{topResult.message}</Text>
+        {hasMore ? (
+          <Text style={styles.routineBannerMore}>외 {analysisResults.length - 1}건의 루틴 팁이 있어요.</Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 export default function MyCosmeticsScreen({ onBack, onSearch, onPast }) {
   const { scrollPaddingBottom } = useRecordScreenInsets();
   const [detailId, setDetailId] = useState(null);
@@ -77,12 +119,33 @@ export default function MyCosmeticsScreen({ onBack, onSearch, onPast }) {
   const [pastTotal, setPastTotal] = useState(null);
   const [savedBanner, setSavedBanner] = useState('');
   const [pastTotalRetry, setPastTotalRetry] = useState(0);
+  const [routineAnalysis, setRoutineAnalysis] = useState([]);
 
   const {
     data: currentCosmetics = [],
     isInitialLoad: isCurrentLoading,
     error: currentError,
   } = useCosmeticsListQuery(true, loadRetryKey);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (currentCosmetics.length >= 2) {
+      getRoutineAnalysis().then((res) => {
+        if (!cancelled && res?.analysis_results) {
+          setRoutineAnalysis(res.analysis_results);
+        }
+      }).catch(() => {
+        // Ignore error
+      });
+    } else {
+      setRoutineAnalysis([]);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentCosmetics]);
 
   useEffect(() => {
     let cancelled = false;
@@ -287,16 +350,19 @@ export default function MyCosmeticsScreen({ onBack, onSearch, onPast }) {
           <SectionLabel title="사용 중" count={currentCosmetics.length} />
 
           {currentCosmetics.length > 0 ? (
-            <CosmeticGroupedList
-              items={currentCosmetics}
-              isPast={false}
-              autoLayout
-              onPressItem={handlePressItem}
-              onStopTodayItem={handleStopToday}
-              onStopUsingItem={handleStopUsing}
-              onEditDateItem={handleEditDateCurrent}
-              savingItemId={savingItemId}
-            />
+            <>
+              <RoutineAnalysisBanner analysisResults={routineAnalysis} />
+              <CosmeticGroupedList
+                items={currentCosmetics}
+                isPast={false}
+                autoLayout
+                onPressItem={handlePressItem}
+                onStopTodayItem={handleStopToday}
+                onStopUsingItem={handleStopUsing}
+                onEditDateItem={handleEditDateCurrent}
+                savingItemId={savingItemId}
+              />
+            </>
           ) : showCurrentLoading ? (
             <View style={styles.loadingRow}>
               <ActivityIndicator size="small" color={RECORD_COLORS.olive} />
@@ -449,5 +515,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: RECORD_COLORS.olive,
+  },
+  routineBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 16,
+    gap: 10,
+  },
+  routineBannerTextWrap: {
+    flex: 1,
+    gap: 4,
+  },
+  routineBannerTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  routineBannerMessage: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: RECORD_COLORS.text,
+  },
+  routineBannerMore: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: RECORD_COLORS.muted,
+    marginTop: 2,
   },
 });

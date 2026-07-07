@@ -228,6 +228,7 @@ def _enrich_diet_log_items(diet_log_id: int, user_id: int) -> None:
 @router.post("/analyze-photo/quick", response_model=PhotoAnalyzeQuickResponse)
 async def analyze_diet_photo_quick(
     file: UploadFile = File(...),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """1단계: GPT Vision만 — 음식명만 빠르게 반환 (CV·DB lookup 없음)."""
@@ -236,11 +237,18 @@ async def analyze_diet_photo_quick(
         f"[diet-analyze-quick] user_id={current_user.id} bytes={len(image_bytes)}",
         flush=True,
     )
-    food_name = await food_vision_service.image_to_food_name_fast(image_bytes)
+    vision_result = await food_vision_service.image_to_food_name_fast(db, current_user.id, image_bytes)
+    food_name = vision_result.get("food_name", "")
     clean_name = (food_name or "").strip()
     if not clean_name or clean_name.lower() in _NOT_FOOD_RESPONSES:
-        return PhotoAnalyzeQuickResponse(food_name="")
-    return PhotoAnalyzeQuickResponse(food_name=clean_name)
+        return PhotoAnalyzeQuickResponse(food_name="", candidates=[], confidence="low", needs_confirmation=False)
+
+    return PhotoAnalyzeQuickResponse(
+        food_name=clean_name,
+        candidates=vision_result.get("candidates", []),
+        confidence=vision_result.get("confidence", "high"),
+        needs_confirmation=vision_result.get("needs_confirmation", False)
+    )
 
 
 @router.post("/analyze-photo", response_model=PhotoAnalyzeResponse)
@@ -255,11 +263,15 @@ async def analyze_diet_photo(
         flush=True,
     )
 
-    food_name, cv_info = await food_vision_service.image_to_food_name(image_bytes)
+    vision_result, cv_info = await food_vision_service.image_to_food_name(db, current_user.id, image_bytes)
+    food_name = vision_result.get("food_name", "")
     clean_name = (food_name or "").strip()
     if not clean_name or clean_name.lower() in _NOT_FOOD_RESPONSES:
         return PhotoAnalyzeResponse(
             food_name="",
+            candidates=[],
+            confidence="low",
+            needs_confirmation=False,
             match_type="인식실패",
             nutrition=None,
         )
@@ -294,6 +306,9 @@ async def analyze_diet_photo(
 
     return PhotoAnalyzeResponse(
         food_name=response_name,
+        candidates=vision_result.get("candidates", []),
+        confidence=vision_result.get("confidence", "high"),
+        needs_confirmation=vision_result.get("needs_confirmation", False),
         match_type=match_type,
         nutrition=nutrition,
         food_item_id=food_item_id,

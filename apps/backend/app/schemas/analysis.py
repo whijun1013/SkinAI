@@ -74,10 +74,22 @@ class DiscoveredPatternResponse(BaseModel):
     affected_signal_label: Optional[str] = None
 
 
+class ActionRecommendationResponse(BaseModel):
+    action_key: str
+    title: str
+    reason: str
+    action: str
+    category: str
+    factor_key: str
+    evidence_level: str
+    confidence_label: str
+
+
 class AnalysisResultDetailResponse(AnalysisResultResponse):
     agent_results: List[AgentResultResponse] = Field(default_factory=list)
     concern_verdicts: List[ConcernVerdictResponse] = Field(default_factory=list)
     discovered_patterns: List[DiscoveredPatternResponse] = Field(default_factory=list)
+    action_recommendations: List[ActionRecommendationResponse] = Field(default_factory=list)
 
 
 class AnalysisResponse(BaseModel):

@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: skinai-backend
+    env: python
+    buildCommand: "cd apps/backend && pip install -r requirements.txt && python -m app.migrate"
+    startCommand: "cd apps/backend && uvicorn main:app --host 0.0.0.0 --port 10000"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: OAUTH_SESSION_SECRET
+        generateValue: true
+      - key: OAUTH_REDIRECT_BASE_URL
+        sync: false
+      - key: SOCIAL_LOGIN_DEFAULT_REDIRECT_URI
+        value: luvel://auth/social
+      - key: SOCIAL_LOGIN_ALLOWED_REDIRECT_SCHEMES
+        value: luvel
+      - key: APPLE_CLIENT_ID
+        sync: false
+      - key: APPLE_TEAM_ID
+        sync: false
+      - key: APPLE_KEY_ID
+        sync: false
+      - key: APPLE_PRIVATE_KEY_PATH
+        sync: false
+      - key: STORAGE_PROVIDER
+        value: local
+      - key: BACKEND_BASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: MONGO_URL
+        sync: false
+      - key: MONGO_DB_NAME
+        value: luvel
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ENABLE_ACTION_RECOMMENDATIONS
+        value: "true"
+      - key: ENABLE_FOOD_VISION
+        value: "false"
+      - key: FOOD_VISION_PROVIDER
+        value: openai
+      - key: ENABLE_COSMETIC_OCR
+        value: "false"
+      - key: COSMETIC_OCR_PROVIDER
+        value: openai

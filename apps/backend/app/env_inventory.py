@@ -85,6 +85,17 @@ ENVIRONMENT_VARIABLES: tuple[EnvVarSpec, ...] = (
     EnvVarSpec("REVIEW_ACCOUNT_PASSWORD", secret=True, description="Password for reviewer test account."),
     EnvVarSpec("REVIEW_ACCOUNT_NAME", default="Luvel Reviewer", description="Name for reviewer test account."),
     EnvVarSpec("ENABLE_ADMIN_DUMMY_TOOLS", default="false", description="Enable admin-only dummy generators."),
+    EnvVarSpec("ENABLE_ACTION_RECOMMENDATIONS", default="true", description="Enable action recommendations in reports."),
+    EnvVarSpec("ENABLE_FOOD_VISION", default="false", description="Enable AI food vision processing."),
+    EnvVarSpec("FOOD_VISION_PROVIDER", default="openai", description="disabled|openai|gemini"),
+    EnvVarSpec("FOOD_VISION_DAILY_LIMIT_PER_USER", default="10", description="Daily quota per user for food vision."),
+    EnvVarSpec("FOOD_VISION_MONTHLY_BUDGET_USD", default="20.0", description="Global monthly budget for food vision."),
+    EnvVarSpec("FOOD_VISION_CACHE_TTL_DAYS", default="30", description="Cache TTL for food vision results."),
+    EnvVarSpec("ENABLE_COSMETIC_OCR", default="false", description="Enable cosmetic ingredients OCR."),
+    EnvVarSpec("COSMETIC_OCR_PROVIDER", default="openai", description="disabled|openai"),
+    EnvVarSpec("COSMETIC_OCR_DAILY_LIMIT_PER_USER", default="5", description="Daily quota per user for cosmetic OCR."),
+    EnvVarSpec("COSMETIC_OCR_MONTHLY_BUDGET_USD", default="10.0", description="Global monthly budget for cosmetic OCR."),
+    EnvVarSpec("COSMETIC_OCR_CACHE_TTL_DAYS", default="30", description="Cache TTL for OCR results."),
 )
 
 
@@ -123,5 +134,15 @@ def validate_environment(environ: dict[str, str] | None = None) -> list[str]:
     review_login_enabled = values.get("ENABLE_REVIEW_ACCOUNT_LOGIN", "false").lower() in {"1", "true", "yes", "on"}
     if review_login_enabled:
         missing.extend(name for name in REVIEW_ACCOUNT_REQUIRED_ENV if not values.get(name, "").strip())
+
+    food_vision_enabled = values.get("ENABLE_FOOD_VISION", "false").lower() in {"1", "true", "yes", "on"}
+    food_vision_provider = values.get("FOOD_VISION_PROVIDER", "openai").lower()
+    if food_vision_enabled and food_vision_provider == "openai" and not values.get("OPENAI_API_KEY", "").strip():
+        missing.append("OPENAI_API_KEY")
+
+    cosmetic_ocr_enabled = values.get("ENABLE_COSMETIC_OCR", "false").lower() in {"1", "true", "yes", "on"}
+    cosmetic_ocr_provider = values.get("COSMETIC_OCR_PROVIDER", "disabled").lower()
+    if cosmetic_ocr_enabled and cosmetic_ocr_provider == "openai" and not values.get("OPENAI_API_KEY", "").strip():
+        missing.append("OPENAI_API_KEY")
 
     return sorted(set(missing))

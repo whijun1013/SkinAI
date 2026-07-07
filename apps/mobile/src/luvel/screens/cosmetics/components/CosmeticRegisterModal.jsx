@@ -168,7 +168,7 @@ function PendingRegistrationPanel({ product, onClose, onRegistered, footerPaddin
         <View style={styles.body}>
           <Text style={styles.heroName}>직접 제품 등록하기</Text>
           <Text style={styles.heroMeta}>원하시는 제품이 없다면 직접 등록을 요청해 주세요.</Text>
-          
+
           <View style={{ marginTop: 24, gap: 16 }}>
             <View>
               <Text style={{ fontSize: 13, fontWeight: '700', marginBottom: 8, color: RECORD_COLORS.text }}>브랜드</Text>
@@ -204,6 +204,125 @@ function PendingRegistrationPanel({ product, onClose, onRegistered, footerPaddin
     </View>
   );
 }
+
+function OcrRegistrationPanel({ product, onClose, onRegistered, footerPaddingBottom = 0 }) {
+  const [brand, setBrand] = useState('');
+  const [productName, setProductName] = useState(product?.query || '');
+  const [ingredientsText, setIngredientsText] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const handleSelectImage = async () => {
+    try {
+      const { launchImageLibraryAsync, MediaTypeOptions } = require('expo-image-picker');
+      const result = await launchImageLibraryAsync({
+        mediaTypes: MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        setAnalyzing(true);
+        const { ingredients, confidence } = await cosmeticsAPI.extractCosmeticIngredientsOCR(uri);
+        if (ingredients && ingredients.length > 0) {
+          setIngredientsText(ingredients.join(', '));
+        } else {
+          Alert.alert('추출 실패', '성분을 추출하지 못했습니다. 사진을 다시 확인해 주세요.');
+        }
+      }
+    } catch (err) {
+      console.warn(err);
+      Alert.alert('분석 오류', err.response?.data?.detail || '성분 추출 중 오류가 발생했습니다.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!brand.trim() || !productName.trim()) {
+      Alert.alert('입력 오류', '브랜드와 제품명을 모두 입력해 주세요.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await cosmeticsAPI.requestRegistration({
+        brand,
+        product_name: productName,
+        ingredients_text: ingredientsText,
+      });
+      Alert.alert('요청 완료', '제품 등록 요청이 완료되었습니다.');
+      onRegistered?.({ keepSearchOpen: true });
+    } catch (err) {
+      Alert.alert('오류', '등록 요청에 실패했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <View style={styles.successRoot}>
+      <SubScreenRoot onBack={onClose}>
+        <SubScreenTopBar title="OCR 성분 추출로 등록" onBack={onClose} />
+        <Animated.ScrollView contentContainerStyle={[styles.body, { paddingBottom: footerPaddingBottom + 100 }]}>
+          <Text style={styles.heroName}>사진으로 제품 등록하기</Text>
+          <Text style={styles.heroMeta}>화장품의 전성분표를 촬영하거나 선택하여 성분을 자동으로 추출하세요.</Text>
+
+          <View style={{ marginTop: 24, gap: 16 }}>
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '700', marginBottom: 8, color: RECORD_COLORS.text }}>브랜드</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="예: 라운드랩"
+                value={brand}
+                onChangeText={setBrand}
+                placeholderTextColor={RECORD_COLORS.muted}
+              />
+            </View>
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '700', marginBottom: 8, color: RECORD_COLORS.text }}>제품명</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="예: 자작나무 수분 크림"
+                value={productName}
+                onChangeText={setProductName}
+                placeholderTextColor={RECORD_COLORS.muted}
+              />
+            </View>
+            <View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: RECORD_COLORS.text }}>전성분</Text>
+                <TouchableOpacity onPress={handleSelectImage} disabled={analyzing} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="camera" size={14} color={RECORD_COLORS.olive} style={{ marginRight: 4 }} />
+                  <Text style={{ fontSize: 12, color: RECORD_COLORS.olive, fontWeight: '600' }}>
+                    {analyzing ? '분석 중...' : '사진 스캔'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={[styles.inputField, { minHeight: 100, textAlignVertical: 'top' }]}
+                placeholder="스캔 버튼을 눌러 이미지를 선택하면 자동으로 입력됩니다."
+                value={ingredientsText}
+                onChangeText={setIngredientsText}
+                multiline
+                placeholderTextColor={RECORD_COLORS.muted}
+              />
+            </View>
+          </View>
+        </Animated.ScrollView>
+
+        <SubScreenFooter
+          label="요청하기"
+          onPress={handleRegister}
+          saving={saving || analyzing}
+          icon="paper-plane-outline"
+          footerPaddingBottom={footerPaddingBottom}
+        />
+      </SubScreenRoot>
+    </View>
+  );
+}
+
 
 /**
 
@@ -390,6 +509,25 @@ export default function CosmeticRegisterModal({
         ]}
       >
         <PendingRegistrationPanel
+          product={product}
+          onClose={handleClose}
+          onRegistered={onRegistered}
+          footerPaddingBottom={
+            layout.footerPaddingBottom + (presentation === 'overlay' ? insets.bottom : 0)
+          }
+        />
+      </View>
+    );
+  } else if (product.isOcrRequest) {
+    content = (
+      <View
+        style={[
+          styles.root,
+          presentation === 'modal' ? modalLayout.rootStyle : styles.overlayRoot,
+          overlayRootStyle,
+        ]}
+      >
+        <OcrRegistrationPanel
           product={product}
           onClose={handleClose}
           onRegistered={onRegistered}

@@ -119,7 +119,7 @@ class DietLogCreate(BaseModel):
         if self.input_method == "manual" and not self.note:
             raise ValueError("manual 입력 시 note는 비워둘 수 없습니다.")
         return self
-    
+
     @model_validator(mode="after")
     def validate_photo_input(self):
         if self.input_method == "photo":
@@ -202,10 +202,16 @@ class DietLogUpdate(BaseModel):
 class PhotoAnalyzeQuickResponse(BaseModel):
     """GPT Vision만 사용하는 1단계 빠른 음식명 인식."""
     food_name: str
+    candidates: List[str] = Field(default_factory=list)
+    confidence: Literal["high", "medium", "low"] = "high"
+    needs_confirmation: bool = False
 
 
 class PhotoAnalyzeResponse(BaseModel):
     food_name: str
+    candidates: List[str] = Field(default_factory=list)
+    confidence: Literal["high", "medium", "low"] = "high"
+    needs_confirmation: bool = False
     match_type: str  # 정확(DB) | 카테고리 | FTS검색 | 공공API | GPT추정 | 없음
     nutrition: Optional[dict[str, Any]] = None
     photo_url: Optional[str] = None

@@ -87,3 +87,42 @@ def test_validate_environment_requires_review_account_credentials_when_enabled()
     )
 
     assert missing == ["REVIEW_ACCOUNT_EMAIL", "REVIEW_ACCOUNT_PASSWORD"]
+
+
+def test_validate_environment_requires_ai_provider_key_when_feature_enabled():
+    base_env = {
+        "DATABASE_URL": "mysql://example",
+        "MONGO_URL": "mongodb://example",
+        "MONGO_DB_NAME": "luvel",
+        "JWT_SECRET_KEY": "secret",
+        "OAUTH_SESSION_SECRET": "secret",
+        "OAUTH_REDIRECT_BASE_URL": "https://api.example.com",
+        "SOCIAL_LOGIN_DEFAULT_REDIRECT_URI": "luvel://auth/social",
+        "SOCIAL_LOGIN_ALLOWED_REDIRECT_SCHEMES": "luvel",
+        "APPLE_CLIENT_ID": "com.luvel.app",
+        "APPLE_TEAM_ID": "team",
+        "APPLE_KEY_ID": "key",
+        "APPLE_PRIVATE_KEY_PATH": "/run/secrets/apple.p8",
+        "STORAGE_PROVIDER": "local",
+        "BACKEND_BASE_URL": "https://api.example.com",
+        "CORS_ORIGINS": "https://app.example.com",
+        "SKIN_ANALYSIS_PROVIDER": "disabled",
+    }
+
+    food_missing = validate_environment(
+        {
+            **base_env,
+            "ENABLE_FOOD_VISION": "true",
+            "FOOD_VISION_PROVIDER": "openai",
+        }
+    )
+    assert food_missing == ["OPENAI_API_KEY"]
+
+    ocr_missing = validate_environment(
+        {
+            **base_env,
+            "ENABLE_COSMETIC_OCR": "true",
+            "COSMETIC_OCR_PROVIDER": "openai",
+        }
+    )
+    assert ocr_missing == ["OPENAI_API_KEY"]

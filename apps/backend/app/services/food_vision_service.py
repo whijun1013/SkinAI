@@ -11,12 +11,15 @@ import logging
 import os
 import json
 import base64
+import time
 from typing import Optional
 
 from PIL import Image
 
 import httpx
 from openai import AsyncOpenAI
+from sqlalchemy.orm import Session
+from app.services import ai_usage_service
 
 logger = logging.getLogger("food_vision")
 
@@ -43,12 +46,27 @@ def _oai_client() -> AsyncOpenAI:
 
 # ── Step 1: GPT 음식명 인식 ──────────────────────────────────────────────────
 
-async def recognize_food(image_bytes: bytes) -> str:
+async def recognize_food(db: Session, user_id: int, image_bytes: bytes) -> dict:
     """
-    이미지를 GPT에 전달해 음식명을 한국어로 반환.
+    이미지를 GPT에 전달해 음식명, 후보, 신뢰도 등을 JSON 형식으로 반환.
     """
+    enable_vision = _clean_env(os.getenv("ENABLE_FOOD_VISION", "false")).lower() in ("true", "1", "yes")
+    if not enable_vision:
+        return {"food_name": "", "candidates": [], "confidence": "low", "needs_confirmation": False}
+
     if not _OAI_KEY:
-        return ""
+        return {"food_name": "", "candidates": [], "confidence": "low", "needs_confirmation": False}
+
+    daily_limit = int(os.getenv("FOOD_VISION_DAILY_LIMIT_PER_USER", "10"))
+    budget_usd = float(os.getenv("FOOD_VISION_MONTHLY_BUDGET_USD", "20.0"))
+
+    if not ai_usage_service.check_user_daily_limit(db, user_id, "food_vision", daily_limit):
+        logger.warning("[food_vision] user_id=%s daily limit exceeded.", user_id)
+        return {"food_name": "", "candidates": [], "confidence": "low", "needs_confirmation": False}
+
+    if not ai_usage_service.check_monthly_budget(db, "food_vision", budget_usd):
+        logger.warning("[food_vision] Global monthly budget exceeded.")
+        return {"food_name": "", "candidates": [], "confidence": "low", "needs_confirmation": False}
 
     prompt = """
 Look at the photo and tell me the name of the food in Korean.
@@ -102,20 +120,45 @@ For packaged foods, the product name written on the packaging has the highest pr
 
 Return the food name you see in the photo exactly as it is. If there is no food, return ONLY an empty string ("").
 
-Before returning the food name, MUST evaluate internally in this order:
+Before returning the result, MUST evaluate internally in this order:
 1. Determine food category (e.g., 치킨, 피자, 냉면, 김밥)
 2. Determine specific menu (e.g., 시즈닝치킨, 페퍼로니피자, 평양냉면)
 3. Determine if it's a signature menu of a specific brand (e.g., BHC 뿌링클, 교촌 허니콤보)
-4. Return the most specific food name.
+4. Decide the most specific food name.
+5. Think of 2-3 alternative candidates if unsure.
+6. Evaluate confidence ("high", "medium", "low").
+7. If confidence is low or multiple distinct foods are mixed, set needs_confirmation to true.
 
-In the final result, output ONLY the food name. Do NOT output the evaluation process.
+Output ONLY a valid JSON object in this format (no markdown code blocks, just raw JSON):
+{
+  "food_name": "Main food name (empty string if no food)",
+  "candidates": ["Alternative 1", "Alternative 2"],
+  "confidence": "high",
+  "needs_confirmation": false
+}
 """
 
     img_b64 = base64.b64encode(image_bytes).decode()
 
     import openai
     from PIL import ImageFilter
-    
+
+    start_time = time.time()
+
+    def _parse_response(content: str) -> dict:
+        try:
+            content = _extract_json_from_gpt_response(content)
+            parsed = json.loads(content)
+            return {
+                "food_name": parsed.get("food_name", ""),
+                "candidates": parsed.get("candidates", []),
+                "confidence": parsed.get("confidence", "high"),
+                "needs_confirmation": parsed.get("needs_confirmation", False)
+            }
+        except Exception as e:
+            logger.warning("Failed to parse GPT response: %s (Raw: %s)", e, content)
+            return {"food_name": "", "candidates": [], "confidence": "low", "needs_confirmation": False}
+
     try:
         client = _oai_client()
         res = await client.chat.completions.create(
@@ -127,11 +170,22 @@ In the final result, output ONLY the food name. Do NOT output the evaluation pro
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}},
                 ],
             }],
-            max_tokens=60,
+            max_tokens=200,
+            response_format={"type": "json_object"}
         )
-        gpt_raw = res.choices[0].message.content.strip().strip('"').strip("'").strip()
-        logger.debug("GPT 원본 응답: %s", gpt_raw)
-        return gpt_raw
+        gpt_raw = res.choices[0].message.content.strip()
+        latency_ms = int((time.time() - start_time) * 1000)
+        usage = res.usage
+
+        # Estimate cost (GPT-4o standard: input $5/1M, output $15/1M roughly)
+        # Just an estimation for budget tracking
+        est_cost = (usage.prompt_tokens * 0.000005) + (usage.completion_tokens * 0.000015)
+        ai_usage_service.record_ai_usage(
+            db, user_id, "food_vision", "openai",
+            usage.prompt_tokens, usage.completion_tokens, est_cost, latency_ms, "success"
+        )
+
+        return _parse_response(gpt_raw)
     except openai.BadRequestError as e:
         logger.warning("Vision API Policy Refusal detected: %s. Retrying with blurred image.", e)
         try:
@@ -142,6 +196,7 @@ In the final result, output ONLY the food name. Do NOT output the evaluation pro
             img.save(buf, format="JPEG", quality=75)
             blurred_b64 = base64.b64encode(buf.getvalue()).decode()
 
+            start_time = time.time()
             res = await client.chat.completions.create(
                 model=_VISION_MODEL,
                 messages=[{
@@ -151,16 +206,26 @@ In the final result, output ONLY the food name. Do NOT output the evaluation pro
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{blurred_b64}"}},
                     ],
                 }],
-                max_tokens=60,
+                max_tokens=200,
+                response_format={"type": "json_object"}
             )
-            gpt_raw = res.choices[0].message.content.strip().strip('"').strip("'").strip()
-            return gpt_raw
+            gpt_raw = res.choices[0].message.content.strip()
+            latency_ms = int((time.time() - start_time) * 1000)
+            usage = res.usage
+            est_cost = (usage.prompt_tokens * 0.000005) + (usage.completion_tokens * 0.000015)
+            ai_usage_service.record_ai_usage(
+                db, user_id, "food_vision", "openai",
+                usage.prompt_tokens, usage.completion_tokens, est_cost, latency_ms, "fallback"
+            )
+            return _parse_response(gpt_raw)
         except Exception as retry_e:
             logger.warning("블러 처리 후 재시도 실패: %s", retry_e)
-            return ""
+            ai_usage_service.record_ai_usage(db, user_id, "food_vision", "openai", 0, 0, 0, 0, "failed", str(retry_e)[:50])
+            return {"food_name": "", "candidates": [], "confidence": "low", "needs_confirmation": False}
     except Exception as e:
         logger.warning("GPT 음식명 인식 오류: %s", e)
-        return ""
+        ai_usage_service.record_ai_usage(db, user_id, "food_vision", "openai", 0, 0, 0, 0, "failed", str(e)[:50])
+        return {"food_name": "", "candidates": [], "confidence": "low", "needs_confirmation": False}
 
 
 # ── 내부 유틸 ────────────────────────────────────────────────────────────────
@@ -372,23 +437,23 @@ def _resize_for_vision(image_bytes: bytes, max_side: int | None = None) -> bytes
 
 # ── 편의 함수: 이미지 → 음식명 전체 파이프라인 ──────────────────────────────
 
-async def image_to_food_name_fast(image_bytes: bytes) -> str:
+async def image_to_food_name_fast(db: Session, user_id: int, image_bytes: bytes) -> dict:
     """모바일 1단계 빠른 이름 표시용."""
     fast_side = int(os.getenv("FOOD_VISION_FAST_MAX_SIDE", "768"))
     image_bytes = _resize_for_vision(image_bytes, max_side=fast_side)
-    food_name = await recognize_food(image_bytes)
-    logger.info("[food-vision] mode=fast_gpt result=%s", food_name)
-    return food_name
+    vision_result = await recognize_food(db, user_id, image_bytes)
+    logger.info("[food-vision] mode=fast_gpt result=%s", vision_result)
+    return vision_result
 
 
-async def image_to_food_name(image_bytes: bytes) -> tuple[str, dict]:
+async def image_to_food_name(db: Session, user_id: int, image_bytes: bytes) -> tuple[dict, dict]:
     """
     음식명 인식 파이프라인.
     CV를 거치지 않고 바로 GPT Vision을 호출합니다.
     Returns:
-        (food_name, {})
+        (vision_result, cv_info)
     """
     image_bytes = _resize_for_vision(image_bytes)
-    food_name = await recognize_food(image_bytes)
-    logger.info("[food-vision] mode=gpt_only result=%s", food_name)
-    return food_name, {}
+    vision_result = await recognize_food(db, user_id, image_bytes)
+    logger.info("[food-vision] mode=gpt_only result=%s", vision_result)
+    return vision_result, {}

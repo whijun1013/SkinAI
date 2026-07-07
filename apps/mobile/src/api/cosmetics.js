@@ -19,6 +19,11 @@ export async function getCosmeticAnalysis(cosmeticId) {
   return response.data;
 }
 
+export async function getRoutineAnalysis() {
+  const response = await apiClient.get('/users/me/cosmetics/routine-analysis');
+  return response.data;
+}
+
 export async function getMyCosmetics(isCurrentOrParams) {
   let params = {};
   if (typeof isCurrentOrParams === 'object' && isCurrentOrParams !== null) {
@@ -90,6 +95,27 @@ export async function getMyCosmeticsPage({ is_current = false, skip = 0, limit =
   return normalizeMyCosmeticsPage(response.data, { skip, limit, is_current });
 }
 
+export async function extractCosmeticIngredientsOCR(imageUri, { signal } = {}) {
+  const formData = new FormData();
+  formData.append('file', {
+    uri: imageUri,
+    name: 'cosmetic_label.jpg',
+    type: 'image/jpeg',
+  });
+
+  const response = await apiClient.post('/users/me/cosmetics/ocr/ingredients', formData, {
+    signal,
+    timeout: 30000,
+    transformRequest: (data, headers) => {
+      if (data instanceof FormData) {
+        delete headers['Content-Type'];
+      }
+      return data;
+    },
+  });
+  return response.data;
+}
+
 export async function addMyCosmetic(productIdOrPayload, isCurrent = true, startedAt = null) {
   let payload;
   if (typeof productIdOrPayload === 'object' && productIdOrPayload !== null) {
@@ -128,6 +154,7 @@ export const cosmeticsAPI = {
   searchCosmetics,
   getCosmeticDetail,
   getCosmeticAnalysis,
+  getRoutineAnalysis,
   getMyCosmetics,
   getMyCosmeticsPage,
   addMyCosmetic,

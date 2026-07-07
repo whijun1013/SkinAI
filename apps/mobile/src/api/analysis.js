@@ -28,3 +28,9 @@ export async function createAnalysisRequest(payload) {
   });
   return response.data;
 }
+export async function submitActionFeedback(id, payload) {
+  const response = await apiClient.post(`/users/me/analysis/${id}/action-feedback`, payload, {
+    timeout: ANALYSIS_TIMEOUT_MS,
+  });
+  return response.data;
+}

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, selectinload
 from typing import List, Optional
@@ -13,6 +13,7 @@ from app.schemas.cosmetic import (
     PaginatedUserCosmeticsResponse,
 )
 from app.deps.auth import get_current_user
+from app.services.cosmetic_ocr_service import extract_ingredients
 
 router = APIRouter(prefix="/users/me/cosmetics", tags=["내 화장품"])
 
@@ -63,6 +64,58 @@ def get_my_cosmetics(
         limit=limit,
         has_more=skip + len(validated) < total,
     ).model_dump()
+
+
+@router.post("/ocr/ingredients")
+async def cosmetic_ocr_ingredients(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    화장품 전성분표 이미지를 분석하여 성분 텍스트 목록 추출 (GPT-4o Vision).
+    """
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    result = await extract_ingredients(db, current_user.id, image_bytes)
+    if result.get("error"):
+        if result["error"] in ["ocr_disabled", "api_key_missing"]:
+            raise HTTPException(status_code=503, detail="OCR service is currently disabled.")
+        elif result["error"] in ["daily_limit_exceeded", "monthly_budget_exceeded"]:
+            raise HTTPException(status_code=429, detail="OCR usage limit exceeded.")
+        else:
+            raise HTTPException(status_code=500, detail=f"OCR analysis failed: {result['error']}")
+
+    return {
+        "ingredients": result.get("ingredients", []),
+        "confidence": result.get("confidence", "low")
+    }
+
+
+@router.get("/routine-analysis")
+def get_routine_analysis(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    from app.services.cosmetic_routine_rules import analyze_routine
+
+    query = _build_my_cosmetics_query(db, current_user.id, is_current=True)
+    items = query.all()
+
+    products = []
+    for item in items:
+        prod = item.product
+        if prod:
+            products.append({
+                "id": prod.id,
+                "name": f"{prod.brand} {prod.product_name}".strip(),
+                "ingredients": prod.ingredients
+            })
+
+    results = analyze_routine(products)
+    return {"analysis_results": results}
 
 
 @router.post("", response_model=UserCosmeticResponse)
@@ -148,9 +201,9 @@ def delete_my_cosmetic(
     """
     [삭제 정책 안내]
     본 API는 등록된 화장품을 DB에서 영구 삭제(Hard Delete)합니다.
-    사용자의 과거 피부 분석 일지 등과의 연동 이력 보존이 중요하거나 
-    과거 사용 이력을 유지하고 싶은 경우, 본 DELETE API 대신 
-    PUT API를 호출하여 is_current=False (및 ended_at 기록)로 업데이트하여 
+    사용자의 과거 피부 분석 일지 등과의 연동 이력 보존이 중요하거나
+    과거 사용 이력을 유지하고 싶은 경우, 본 DELETE API 대신
+    PUT API를 호출하여 is_current=False (및 ended_at 기록)로 업데이트하여
     사용 종료 상태로 전환할 것을 권장합니다.
     """
     user_cos = db.query(UserCosmetic).filter(

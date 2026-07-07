@@ -15,7 +15,7 @@ import { getSkinLogs } from "../../../api/skinLogs";
 import { getDietLogs } from "../../../api/diet";
 import { getMyCosmetics } from "../../../api/cosmetics";
 import { getMyMedications } from "../../../api/medications";
-import { createAnalysisRequest, getAnalysisDetail, getAnalysisList } from "../../../api/analysis";
+import { createAnalysisRequest, getAnalysisDetail, getAnalysisList, submitActionFeedback } from "../../../api/analysis";
 import useTabContentInsets from "../../../hooks/useTabContentInsets";
 import useRecordCacheStore from "../../../stores/recordCacheStore";
 import SkinTrendChart from "../../components/SkinTrendChart";
@@ -64,6 +64,7 @@ export default function ReportScreen({
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(null);
   const [detailRequestId, setDetailRequestId] = useState(null);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState({});
   const [selectedBaseDateKey, setSelectedBaseDateKey] = useState(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarMonthDate, setCalendarMonthDate] = useState(() => new Date());
@@ -396,6 +397,26 @@ export default function ReportScreen({
     setDetailRequestId(null);
   };
 
+  const handleActionFeedback = async (actionItem, feedbackType) => {
+    if (!detailRequestId) return;
+
+    const feedbackKey = `${detailRequestId}-${actionItem.action_key}`;
+    setFeedbackSubmitting((prev) => ({ ...prev, [feedbackKey]: true }));
+
+    try {
+      await submitActionFeedback(detailRequestId, {
+        action_key: actionItem.action_key,
+        factor_key: actionItem.factor_key,
+        feedback: feedbackType
+      });
+      Alert.alert("피드백 감사합니다", "앞으로 더 나은 추천을 위해 참고할게요.");
+    } catch (error) {
+      Alert.alert("오류", "피드백을 저장하지 못했어요.");
+    } finally {
+      setFeedbackSubmitting((prev) => ({ ...prev, [feedbackKey]: false }));
+    }
+  };
+
   const renderHero = () => (
     <View style={styles.hero}>
       <View pointerEvents="none" style={styles.heroWashLarge} />
@@ -577,14 +598,14 @@ export default function ReportScreen({
               let active_lesion = 0;
               let redness = 0;
               let barrier = 0;
-              
+
               if (log?.condition_tags) {
                 const tags = Array.isArray(log.condition_tags) ? log.condition_tags : Object.keys(log.condition_tags);
                 if (tags.some(t => t.includes('트러블') || t.includes('여드름') || t.includes('뾰루지'))) active_lesion = 1;
                 if (tags.some(t => t.includes('홍조') || t.includes('붉은'))) redness = 1;
                 if (tags.some(t => t.includes('각질') || t.includes('건조'))) barrier = 1;
               }
-              
+
               return {
                 dateLabel: String(new Date(dateKey).getDate()),
                 active_lesion,
@@ -729,7 +750,7 @@ export default function ReportScreen({
                     onPress={() => !disabled && handleSelectBaseDate(item.dateKey)}
                   >
                     <Text style={[styles.dayText, selected && styles.dayTextSelected]}>{item.day}</Text>
-                    
+
                     {hasRecord && (
                       <View style={{ flexDirection: 'row', gap: 2, marginTop: 4 }}>
                         {(() => {
@@ -741,11 +762,11 @@ export default function ReportScreen({
                             if (tags.some(t => t.includes('홍조') || t.includes('붉은'))) hasRedness = true;
                             if (tags.some(t => t.includes('각질') || t.includes('건조'))) hasBarrier = true;
                           }
-                          
+
                           if (!hasTrouble && !hasRedness && !hasBarrier) {
                              return <View style={[styles.calendarDot, styles.calendarDotActive, selected && styles.calendarDotSelected]} />;
                           }
-                          
+
                           return (
                             <>
                               {hasTrouble && <View style={[styles.calendarDot, { backgroundColor: '#E57373' }]} />}
@@ -849,6 +870,24 @@ export default function ReportScreen({
 
     return (
       <>
+        {detail.actionRecommendations.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>오늘의 관리 제안</Text>
+            <View style={styles.group}>
+              {detail.actionRecommendations.map((item, index) => (
+                <React.Fragment key={`action-${item.action_key}-${index}`}>
+                  {index > 0 ? <Divider /> : null}
+                  <ActionRecommendationCard
+                    item={item}
+                    isSubmitting={feedbackSubmitting[`${detailRequestId}-${item.action_key}`]}
+                    onFeedback={(type) => handleActionFeedback(item, type)}
+                  />
+                </React.Fragment>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
         <DetailSection title="요약" text={detail.summary} />
 
         {detail.isSparseContent ? (
@@ -957,8 +996,8 @@ export default function ReportScreen({
         {renderRecordFlowSection()}
         <View style={styles.section}>
           <WeeklyNutrientCard selectedDate={effectiveBaseDateKey} />
-          
-          <Pressable 
+
+          <Pressable
             style={[styles.primaryButton, { marginTop: 16 }]}
             onPress={() => onNavigateSubScreen && onNavigateSubScreen("timeline")}
           >
@@ -1018,6 +1057,54 @@ function DetailSection({ title, text }) {
       <Text style={styles.sectionTitle}>{title}</Text>
       <View style={styles.group}>
         <Text style={styles.detailText}>{text}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ActionRecommendationCard({ item, isSubmitting, onFeedback }) {
+  const getIconForCategory = (cat) => {
+    const map = {
+      environment: "partly-sunny-outline",
+      behavior: "bed-outline",
+      diet: "restaurant-outline",
+      period: "water-outline",
+      cosmetics: "color-wand-outline",
+      medication: "medkit-outline",
+    };
+    return map[cat] || "bulb-outline";
+  };
+
+  return (
+    <View style={styles.actionCard}>
+      <View style={styles.actionCardHeader}>
+        <View style={styles.actionCardIconWrap}>
+          <Ionicons name={getIconForCategory(item.category)} size={20} color={COLORS.olive} />
+        </View>
+        <Text style={styles.actionCardTitle}>{item.title}</Text>
+      </View>
+      <Text style={styles.actionCardReason}>{item.reason}</Text>
+      <View style={styles.actionCardBodyWrap}>
+        <Text style={styles.actionCardAction}>{item.action}</Text>
+      </View>
+      <View style={styles.actionCardFeedbackRow}>
+        <Text style={styles.actionCardFeedbackPrompt}>도움이 되셨나요?</Text>
+        <View style={styles.actionCardFeedbackButtons}>
+          <Pressable
+            style={({ pressed }) => [styles.actionCardFeedbackBtn, pressed && styles.pressedItem]}
+            onPress={() => onFeedback("done")}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.actionCardFeedbackBtnText}>네, 해볼게요</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.actionCardFeedbackBtn, pressed && styles.pressedItem]}
+            onPress={() => onFeedback("not_helpful")}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.actionCardFeedbackBtnText}>아쉬워요</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -1539,6 +1626,7 @@ const buildAnalysisDetailViewModel = (analysis, allSkinLogs) => {
   const reportText = getSummaryPreview(getSafeText(result?.report_text));
   const concernVerdicts = Array.isArray(result?.concern_verdicts) ? result.concern_verdicts : [];
   const discoveredPatterns = Array.isArray(result?.discovered_patterns) ? result.discovered_patterns : [];
+  const actionRecommendations = Array.isArray(result?.action_recommendations) ? result.action_recommendations : [];
   const hasPipeline = concernVerdicts.length > 0 || discoveredPatterns.length > 0;
   const candidateFactors = hasPipeline ? [] : getCandidateFactorItems(result);
 
@@ -1546,6 +1634,7 @@ const buildAnalysisDetailViewModel = (analysis, allSkinLogs) => {
     summary: reportText || "최근 기록을 바탕으로 함께 보인 흐름을 정리했어요.",
     concernVerdicts,
     discoveredPatterns,
+    actionRecommendations,
     hasPipeline,
     isSparseContent: !hasPipeline && concernVerdicts.length === 0 && discoveredPatterns.length === 0,
     candidateFactors: !hasPipeline && candidateFactors.length === 0 ? [
@@ -1809,6 +1898,19 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: COLORS.muted,
   },
+  emptySubText: { fontSize: 13, color: COLORS.muted, marginTop: 4 },
+  actionCard: { paddingVertical: 12, paddingHorizontal: 4 },
+  actionCardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  actionCardIconWrap: { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.oliveSoft, alignItems: "center", justifyContent: "center", marginRight: 10 },
+  actionCardTitle: { flex: 1, fontSize: 16, fontWeight: "700", color: COLORS.text },
+  actionCardReason: { fontSize: 13, color: COLORS.muted, marginBottom: 8, paddingLeft: 42 },
+  actionCardBodyWrap: { backgroundColor: COLORS.surfaceSoft, padding: 12, borderRadius: 8, marginLeft: 42, marginBottom: 12 },
+  actionCardAction: { fontSize: 14, lineHeight: 22, color: COLORS.text, fontWeight: "500" },
+  actionCardFeedbackRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 42 },
+  actionCardFeedbackPrompt: { fontSize: 13, color: COLORS.muted },
+  actionCardFeedbackButtons: { flexDirection: "row", gap: 8 },
+  actionCardFeedbackBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: COLORS.bg, borderWidth: 1, borderColor: COLORS.line },
+  actionCardFeedbackBtnText: { fontSize: 12, fontWeight: "600", color: COLORS.olive },
   primaryActionPill: {
     minHeight: 42,
     borderRadius: 21,

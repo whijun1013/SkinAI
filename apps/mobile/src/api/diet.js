@@ -78,9 +78,14 @@ export async function analyzeDietPhotoQuick(imageUri, { signal, preparedUri } = 
     { signal, timeout: ANALYZE_QUICK_TIMEOUT_MS }
   );
 
-  const food_name = data.food_name ?? '';
-  devLog('[Diet] AI 빠른 분석 완료', { food_name });
-  return { food_name };
+  const { food_name, candidates, confidence, needs_confirmation } = data;
+  devLog('[Diet] AI 빠른 분석 완료', { food_name, confidence, needs_confirmation });
+  return {
+    food_name: food_name ?? '',
+    candidates: candidates ?? [],
+    confidence: confidence ?? 'low',
+    needs_confirmation: needs_confirmation ?? false,
+  };
 }
 
 /**
@@ -100,17 +105,21 @@ export async function analyzeDietPhoto(imageUri, { signal, preparedUri } = {}) {
     { signal, timeout: ANALYZE_TIMEOUT_MS }
   );
 
-  const { food_name, match_type, nutrition, food_item_id, food_item_source, skin_factors } = data;
+  const { food_name, candidates, confidence, needs_confirmation, match_type, nutrition, food_item_id, food_item_source, skin_factors } = data;
   devLog('[Diet] AI 정밀 분석 완료', {
     food_name,
     match_type,
     has_nutrition: !!nutrition,
     food_item_id: food_item_id ?? null,
     has_skin_factors: Array.isArray(skin_factors) && skin_factors.length > 0,
+    confidence,
   });
 
   return {
     food_name: food_name ?? '',
+    candidates: candidates ?? [],
+    confidence: confidence ?? 'low',
+    needs_confirmation: needs_confirmation ?? false,
     match_type: match_type ?? '',
     nutrition: nutrition ?? null,
     food_item_id: food_item_id ?? null,

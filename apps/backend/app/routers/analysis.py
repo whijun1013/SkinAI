@@ -30,6 +30,9 @@ from app.services.analysis_orchestrator import (
     list_analysis_requests,
     process_analysis_request_by_id,
 )
+from app.services.action_recommendation_service import generate_action_recommendations
+from app.models.feedback import ActionRecommendationFeedback
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +99,39 @@ def get_analysis_progress_detail(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="analysis request not found")
 
 
+class ActionFeedbackRequest(BaseModel):
+    action_key: str
+    factor_key: str
+    feedback: str = Field(..., description="done|skipped|not_helpful")
+
+@router.post("/{id}/action-feedback", status_code=status.HTTP_201_CREATED)
+def submit_action_feedback(
+    payload: ActionFeedbackRequest,
+    id: int = Path(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        request = get_analysis_request(db, current_user.id, id)
+    except SkinLogNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="analysis request not found")
+
+    if payload.feedback not in ("done", "skipped", "not_helpful"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid feedback value")
+
+    feedback_entry = ActionRecommendationFeedback(
+        user_id=current_user.id,
+        analysis_request_id=request.id,
+        action_key=payload.action_key,
+        factor_key=payload.factor_key,
+        feedback=payload.feedback,
+    )
+    db.add(feedback_entry)
+    db.commit()
+
+    return {"status": "success"}
+
+
 def _to_response(request) -> AnalysisResponse:
     result = None
     if request.analysis_result is not None:
@@ -140,6 +176,7 @@ def _to_detail_response(request, db: Session) -> AnalysisDetailResponse:
                 else None
             ),
             agent_results=[_to_agent_result_response(ar) for ar in agent_results],
+            action_recommendations=generate_action_recommendations(request.analysis_result.discovered_patterns or []),
         )
     return AnalysisDetailResponse(
         request_id=request.id,

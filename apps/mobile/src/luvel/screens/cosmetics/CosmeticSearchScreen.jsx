@@ -210,18 +210,30 @@ export default function CosmeticSearchScreen({ onBack, onAdded, isModal = false,
           ) : null}
 
           {showEmptyResults ? (
-            <TouchableOpacity
-              style={styles.requestRegisterBtn}
-              onPress={() => {
-                Keyboard.dismiss();
-                // We'll open a modal or navigate to a screen for requesting registration
-                setRegisterProduct({ isNewRegistrationRequest: true, query });
-              }}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add-circle-outline" size={20} color={RECORD_COLORS.olive} />
-              <Text style={styles.requestRegisterBtnText}>원하는 제품이 없나요? 직접 등록 요청하기</Text>
-            </TouchableOpacity>
+            <View>
+              <TouchableOpacity
+                style={styles.requestRegisterBtn}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setRegisterProduct({ isNewRegistrationRequest: true, query });
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add-circle-outline" size={20} color={RECORD_COLORS.olive} />
+                <Text style={styles.requestRegisterBtnText}>원하는 제품이 없나요? 직접 등록 요청하기</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.requestRegisterBtn, { marginTop: 12 }]}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setRegisterProduct({ isOcrRequest: true, query });
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="camera-outline" size={20} color={RECORD_COLORS.olive} />
+                <Text style={styles.requestRegisterBtnText}>전성분표 사진으로 성분 추출하기</Text>
+              </TouchableOpacity>
+            </View>
           ) : null}
         </ScrollView>
       </SubScreenRoot>

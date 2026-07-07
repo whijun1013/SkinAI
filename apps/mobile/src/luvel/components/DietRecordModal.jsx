@@ -76,6 +76,10 @@ export default function DietRecordModal({ visible, capture, onClose, onSaved }) 
   const [foodCandidates, setFoodCandidates] = useState([]);
   const [aiFoodItemId, setAiFoodItemId] = useState(null);
 
+  const [aiCandidates, setAiCandidates] = useState([]);
+  const [aiConfidence, setAiConfidence] = useState('high');
+  const [aiNeedsConfirmation, setAiNeedsConfirmation] = useState(false);
+
   const userEditedFoodRef = useRef(false);
   const analyzeAbortRef = useRef(null);
   const aiSnapshotRef = useRef({ name: '', foodItemId: null });
@@ -133,6 +137,9 @@ export default function DietRecordModal({ visible, capture, onClose, onSaved }) 
     setSelectedFoodItem(null);
     setFoodCandidates([]);
     setAiFoodItemId(null);
+    setAiCandidates([]);
+    setAiConfidence('high');
+    setAiNeedsConfirmation(false);
     userEditedFoodRef.current = false;
     aiSnapshotRef.current = { name: '', foodItemId: null };
     aiCompletedRef.current = false;
@@ -169,7 +176,7 @@ export default function DietRecordModal({ visible, capture, onClose, onSaved }) 
         signal: controller.signal,
         preparedUri,
       })
-        .then(({ food_name, match_type, nutrition, food_item_id, skin_factors }) => {
+        .then(({ food_name, candidates, confidence, needs_confirmation, match_type, nutrition, food_item_id, skin_factors }) => {
           const name = (food_name || '').trim();
           aiSnapshotRef.current = { name, foodItemId: food_item_id ?? null };
 
@@ -178,6 +185,9 @@ export default function DietRecordModal({ visible, capture, onClose, onSaved }) 
           setAiFoodItemId(food_item_id ?? null);
           if (!userEditedFoodRef.current) {
             setMatchType(match_type || '');
+            setAiCandidates(candidates || []);
+            setAiConfidence(confidence || 'high');
+            setAiNeedsConfirmation(needs_confirmation || false);
             const hasSkinFactors = Array.isArray(skin_factors) && skin_factors.length > 0;
             if (hasSkinFactors) {
               setSkinFactors(skin_factors);
@@ -468,6 +478,14 @@ export default function DietRecordModal({ visible, capture, onClose, onSaved }) 
                     : '직접 입력하거나 검색 결과를 선택 (선택)'
                 }
               >
+                {!aiRunning && (aiNeedsConfirmation || aiConfidence === 'low') && !userEditedFoodRef.current && (
+                  <View style={styles.analyzeInlineRow}>
+                    <Ionicons name="warning-outline" size={16} color={RECORD_COLORS.hint} />
+                    <Text style={styles.analyzeInlineText}>
+                      음식 인식이 확실하지 않아요. 이름이 맞는지 확인해 주세요.
+                    </Text>
+                  </View>
+                )}
                 <TextInput
                   style={layoutStyles.input}
                   placeholder="예: 김치찌개, 닭가슴살 샐러드"
@@ -492,6 +510,31 @@ export default function DietRecordModal({ visible, capture, onClose, onSaved }) 
                   summary={nutritionSummary}
                   matchType={matchType}
                 />
+
+                {!userEditedFoodRef.current && aiCandidates && aiCandidates.length > 0 && !aiRunning && (
+                  <View style={styles.aiCandidatesContainer}>
+                    <Text style={styles.aiCandidatesLabel}>혹시 다른 음식인가요?</Text>
+                    <View style={styles.aiCandidatesChips}>
+                      {aiCandidates.map((c, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          style={styles.aiCandidateChip}
+                          onPress={() => {
+                            userEditedFoodRef.current = true;
+                            setFoodItemName(c);
+                            setSelectedFoodItem(null);
+                            setSkinFactors(null);
+                            setNutritionSummary(null);
+                            setMatchType('');
+                          }}
+                        >
+                          <Text style={styles.aiCandidateChipText}>{c}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
                 {foodCandidates.length > 0 ? (
                   <View style={styles.candidatesContainer}>
                     <View style={styles.candidatesHeader}>
@@ -698,6 +741,41 @@ const styles = StyleSheet.create({
   },
   foodNameAttentionBanner: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: RECORD_COLORS.hintSoft,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  aiCandidatesContainer: {
+    marginTop: 12,
+  },
+  aiCandidatesLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: RECORD_COLORS.muted,
+    marginBottom: 8,
+  },
+  aiCandidatesChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  aiCandidateChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: RECORD_COLORS.surface,
+    borderWidth: 1,
+    borderColor: RECORD_COLORS.line,
+  },
+  aiCandidateChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: RECORD_COLORS.text,
+  },
     alignItems: 'flex-start',
     gap: 8,
     marginBottom: 12,
