@@ -182,20 +182,26 @@ async def startup_event():
     log.info("[startup] 마이그레이션은 deploy 단계에서 실행됩니다 (python -m app.migrate)")
 
     # 변화점 감지 스케줄러 — 매일 오전 10시 (Asia/Seoul)
-    from app.services.changepoint_service import run_daily_changepoint_detection
-    _scheduler.add_job(
-        run_daily_changepoint_detection,
-        CronTrigger(hour=10, minute=0),
-        id="daily_changepoint",
-        replace_existing=True,
-    )
-    _scheduler.start()
+    if os.getenv("ENABLE_WEB_SCHEDULER", "false").lower() in {"1", "true", "yes", "on"}:
+        from app.services.changepoint_service import run_daily_changepoint_detection
+
+        _scheduler.add_job(
+            run_daily_changepoint_detection,
+            CronTrigger(hour=10, minute=0),
+            id="daily_changepoint",
+            replace_existing=True,
+        )
+        _scheduler.start()
+    else:
+        log.info("[startup] web scheduler disabled; changepoint job runs through the cron service")
+        return
     log.info("[startup] 변화점 감지 스케줄러 시작 (매일 10:00 KST)")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    _scheduler.shutdown(wait=False)
+    if _scheduler.running:
+        _scheduler.shutdown(wait=False)
     await disconnect_mongo()
 
 

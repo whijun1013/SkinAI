@@ -7,6 +7,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.4
+      - key: ENABLE_WEB_SCHEDULER
+        value: false
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET_KEY
@@ -51,3 +53,21 @@ services:
         value: "false"
       - key: COSMETIC_OCR_PROVIDER
         value: openai
+
+  # Render cron expressions use UTC. 01:00 UTC is 10:00 KST.
+  - type: cron
+    name: skinai-daily-changepoint
+    env: python
+    plan: starter
+    schedule: "0 1 * * *"
+    buildCommand: "cd apps/backend && pip install -r requirements.txt"
+    startCommand: "cd apps/backend && python -m data_tools.run_changepoint_detection"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: DATABASE_URL
+        sync: false
+      - key: MONGO_URL
+        sync: false
+      - key: MONGO_DB_NAME
+        value: luvel

@@ -7,29 +7,32 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.luvel.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "Luvel? ?? ??? ?? ??? ???? ?? ???? ?????.",
-        "NSPhotoLibraryUsageDescription": "Luvel? ??? ?? ??? ??? ???? ?? ?? ???? ?????.",
-        "NSPhotoLibraryAddUsageDescription": "Luvel? ??? ??? ??? ???? ?? ?? ???? ?????.",
-        "NSLocationWhenInUseUsageDescription": "Luvel? ?? ?? ? ??? ?? ??? ?? ???? ?? ?? ??? ?????.",
-        "NSHealthShareUsageDescription": "Luvel? ??, ??, ?? ?? ???? ?? ???? ???? ?? Apple Health ???? ????.",
-        "NSHealthUpdateUsageDescription": "Luvel? ???? ??? ?? ???? Apple Health? ???? ?? ?????."
+        "NSCameraUsageDescription": "Luvel uses the camera to record skin and meal photos for analysis.",
+        "NSPhotoLibraryUsageDescription": "Luvel uses the photo library to select skin and meal photos for analysis.",
+        "NSPhotoLibraryAddUsageDescription": "Luvel saves a photo only when you explicitly request it.",
+        "NSLocationWhenInUseUsageDescription": "Luvel uses location to attach local environment information to your records.",
+        "NSHealthShareUsageDescription": "Luvel reads selected Apple Health data to support your personal wellness records.",
+        "NSHealthUpdateUsageDescription": "Luvel does not write or modify Apple Health data."
       },
       "buildNumber": "1",
       "privacyManifests": {
         "NSPrivacyTracking": false,
         "NSPrivacyTrackingDomains": [],
         "NSPrivacyCollectedDataTypes": [],
-        "NSPrivacyAccessedAPITypes": []
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          }
+        ]
       }
     },
     "android": {
@@ -37,12 +40,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.luvel.app",
       "permissions": [
         "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "android.permission.health.READ_SLEEP",
@@ -52,45 +52,24 @@
       ],
       "versionCode": 1
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
+    "web": { "favicon": "./assets/favicon.png" },
     "plugins": [
+      ["expo-splash-screen", { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#ffffff" }],
       "expo-secure-store",
       "expo-web-browser",
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Luvel? ?? ?? ? ??? ?? ??? ?? ???? ?? ?? ??? ?????."
-        }
-      ],
-      [
-        "react-native-health",
-        {
-          "NSHealthShareUsageDescription": "Luvel? ??, ??, ?? ?? ???? ?? ???? ???? ?? Apple Health ???? ????.",
-          "NSHealthUpdateUsageDescription": "Luvel? ???? ??? ?? ???? Apple Health? ???? ?? ?????."
-        }
-      ],
+      ["expo-location", { "locationWhenInUsePermission": "Luvel uses location to attach local environment information to your records." }],
+      ["react-native-health", {
+        "NSHealthShareUsageDescription": "Luvel reads selected Apple Health data to support your personal wellness records.",
+        "NSHealthUpdateUsageDescription": "Luvel does not write or modify Apple Health data."
+      }],
       "react-native-health-connect",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35,
-            "minSdkVersion": 26,
-            "buildToolsVersion": "35.0.0"
-          }
-        }
-      ],
+      ["expo-build-properties", { "android": { "compileSdkVersion": 35, "targetSdkVersion": 35, "minSdkVersion": 26, "buildToolsVersion": "35.0.0" } }],
       "@react-native-community/datetimepicker",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-font",
+      "expo-status-bar"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "6b245d34-8ed0-4606-b4f9-866da9a1b392"
-      }
-    },
+    "extra": { "eas": { "projectId": "6b245d34-8ed0-4606-b4f9-866da9a1b392" } },
     "owner": "ms-sol-team"
   }
 }

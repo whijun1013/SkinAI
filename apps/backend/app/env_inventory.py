@@ -50,6 +50,7 @@ ENVIRONMENT_VARIABLES: tuple[EnvVarSpec, ...] = (
     EnvVarSpec("SKIN_ANALYSIS_PROVIDER", default="gemini", description="gemini|openai|disabled."),
     EnvVarSpec("MEDIAPIPE_FACE_DETECTOR_MODEL", description="Local MediaPipe face detector model path."),
     EnvVarSpec("MEDGEMMA_QUEUE_ENABLED", default="false", description="Enable async visual analysis queue."),
+    EnvVarSpec("ENABLE_WEB_SCHEDULER", default="false", description="Run APScheduler inside the web process; keep false in production when using Render cron."),
     EnvVarSpec("MEDGEMMA_WORKER_MAX_ATTEMPTS", default="3", description="Queue worker retry limit."),
     EnvVarSpec("MEDGEMMA_STALE_REQUEUE_INTERVAL_MINUTES", default="60", description="Stale queue requeue interval."),
     EnvVarSpec("MEDGEMMA_PRIMARY_VISUAL_MIN_CONFIDENCE", default="medium", description="Minimum visual confidence."),

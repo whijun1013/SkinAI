@@ -354,6 +354,7 @@ async def run_changepoint_detection_for_user(db: Session, user_id: int) -> None:
 
     except Exception:
         db.rollback()
+        raise
         logger.exception("[changepoint] 실패 user_id=%d", user_id)
 
 
@@ -369,7 +370,7 @@ def run_daily_changepoint_detection() -> None:
     except Exception:
         logger.exception("[changepoint] 사용자 목록 조회 실패")
         db.close()
-        return
+        raise
 
     logger.info("[changepoint] 일별 변화점 감지 시작 — 대상 %d명", len(user_ids))
 
@@ -386,6 +387,8 @@ def run_daily_changepoint_detection() -> None:
         try:
             loop.run_until_complete(run_changepoint_detection_for_user(db, user_id))
         except Exception:
+            db.close()
+            raise
             logger.exception("[changepoint] user_id=%d 처리 중 예외", user_id)
 
     db.close()

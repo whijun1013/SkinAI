@@ -14,6 +14,12 @@ The project combines a React Native / Expo mobile app with a FastAPI backend. It
 - Public-data ingestion tools for food, cosmetics, and medication master data
 - Release readiness checks for backend configuration and mobile app metadata
 
+## Latest Portfolio Update (2026-07)
+
+- Expo SDK 57 compatibility update with explicit EAS build environments
+- Production release validation for HTTPS API endpoints and AI-provider confirmation
+- Daily changepoint detection moved from the web process to a dedicated Render Cron job
+
 ## Tech Stack
 
 - Mobile: React Native, Expo
