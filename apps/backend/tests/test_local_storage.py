@@ -70,3 +70,12 @@ def test_upload_and_delete_blob(temp_storage_root):
     assert not os.path.exists(local_path)
     assert not blob_exists(url)
     assert read_blob_bytes(url) is None
+
+
+def test_local_storage_rejects_paths_outside_configured_root(temp_storage_root, tmp_path):
+    outside = tmp_path.parent / "outside-secret.txt"
+    outside.write_bytes(b"secret")
+
+    assert read_blob_bytes("/static/../outside-secret.txt") is None
+    delete_blob("/static/../outside-secret.txt")
+    assert outside.read_bytes() == b"secret"

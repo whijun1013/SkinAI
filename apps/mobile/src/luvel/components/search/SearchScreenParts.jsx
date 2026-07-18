@@ -25,7 +25,6 @@ export {
   parseDateString,
 } from './searchDateUtils';
 export { default as RegisterDatePickerSheet } from './RegisterDatePickerSheet';
-export { default as RegisterDatePickerOverlay } from './RegisterDatePickerOverlay';
 
 export function SearchSectionHeader({ title, subtitle, trailing = null, style }) {
   return (
@@ -48,7 +47,7 @@ export function SearchHintBanner({ icon = 'information-circle-outline', text }) 
   );
 }
 
-export function SearchInputField({ value, onChangeText, onClear, placeholder, onSubmit }) {
+export function SearchInputField({ value, onChangeText, onClear, placeholder, onSubmit, onBarcodePress }) {
   return (
     <View style={searchStyles.searchWrap}>
       <View style={searchStyles.searchIconCircle}>
@@ -64,6 +63,11 @@ export function SearchInputField({ value, onChangeText, onClear, placeholder, on
         returnKeyType="search"
         onSubmitEditing={onSubmit}
       />
+      {onBarcodePress ? (
+        <TouchableOpacity activeOpacity={0.7} onPress={onBarcodePress} style={[searchStyles.clearBtn, { marginRight: 6 }]}>
+          <Ionicons name="barcode-outline" size={20} color={RECORD_COLORS.olive} />
+        </TouchableOpacity>
+      ) : null}
       {value.length > 0 ? (
         <TouchableOpacity activeOpacity={0.7} onPress={onClear} style={searchStyles.clearBtn}>
           <Ionicons name="close-circle" size={18} color={RECORD_COLORS.muted} />
@@ -222,6 +226,7 @@ export function SearchFilterPanel({
   onCategorySelect,
   hintText,
   errorText,
+  onBarcodePress
 }) {
   return (
     <View style={searchStyles.filterPanel}>
@@ -231,6 +236,7 @@ export function SearchFilterPanel({
         onClear={onClear}
         placeholder={placeholder}
         onSubmit={onSubmit}
+        onBarcodePress={onBarcodePress}
       />
 
       <View style={searchStyles.panelDivider} />

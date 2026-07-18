@@ -16,6 +16,12 @@ The project combines a React Native / Expo mobile app with a FastAPI backend. It
 
 ## Latest Portfolio Update (2026-07)
 
+### 2026-07-18
+
+- Refactored mobile report date, streak, error, and analysis-eligibility logic into tested pure utilities
+- Split deterministic pattern scoring and timeline construction into focused backend modules
+- Hardened local storage path validation to prevent access outside the configured root
+
 - Expo SDK 57 compatibility update with explicit EAS build environments
 - Production release validation for HTTPS API endpoints and AI-provider confirmation
 - Daily changepoint detection moved from the web process to a dedicated Render Cron job

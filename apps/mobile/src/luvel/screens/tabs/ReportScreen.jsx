@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,11 +16,47 @@ import { getSkinLogs } from "../../../api/skinLogs";
 import { getDietLogs } from "../../../api/diet";
 import { getMyCosmetics } from "../../../api/cosmetics";
 import { getMyMedications } from "../../../api/medications";
-import { createAnalysisRequest, getAnalysisDetail, getAnalysisList, submitActionFeedback } from "../../../api/analysis";
+import {
+  createAnalysisRequest,
+  getAnalysisDetail,
+  getAnalysisList,
+  submitActionFeedback,
+  getProgressComparison
+} from "../../../api/analysis";
 import useTabContentInsets from "../../../hooks/useTabContentInsets";
 import useRecordCacheStore from "../../../stores/recordCacheStore";
 import SkinTrendChart from "../../components/SkinTrendChart";
+import SkinCompareSlider from "../../components/SkinCompareSlider";
 import WeeklyNutrientCard from "../../components/WeeklyNutrientCard";
+import {
+  ANALYSIS_POLL_INTERVAL_MS,
+  ANALYSIS_TIMEOUT_MESSAGE,
+  IN_PROGRESS_STATUSES,
+  LOOKBACK_DAYS,
+  REQUIRED_SKIN_LOG_DAYS,
+  countUniqueLogDays as countUniqueLogDaysLogic,
+  findCompletedAnalysis as findCompletedAnalysisLogic,
+  formatKoreanDate as formatKoreanDateLogic,
+  getAnalysisRequestErrorMessage as getAnalysisRequestErrorMessageLogic,
+  getAnalysisBasisLabel as getAnalysisBasisLabelLogic,
+  getAnalysisHistoryTitle as getAnalysisHistoryTitleLogic,
+  getAnalysisTimestamp as getAnalysisTimestampLogic,
+  getCalendarDays as getCalendarDaysLogic,
+  getLatestLogChangedAt as getLatestLogChangedAtLogic,
+  getLatestSkinLogOnOrBefore as getLatestSkinLogOnOrBeforeLogic,
+  getLookbackDateKeys as getLookbackDateKeysLogic,
+  getReportState as getReportStateLogic,
+  getTrailingRecordStreak as getTrailingRecordStreakLogic,
+  isAnalyzableSkinLog as isAnalyzableSkinLogLogic,
+  isAnalysisRequestDuplicate as isAnalysisRequestDuplicateLogic,
+  isCompletedAnalysis as isCompletedAnalysisLogic,
+  isFutureDateKey as isFutureDateKeyLogic,
+  isTimeoutError as isTimeoutErrorLogic,
+  isWithinLookbackFromBase as isWithinLookbackFromBaseLogic,
+  normalizeAnalysisList as normalizeAnalysisListLogic,
+  parseDateKey as parseDateKeyLogic,
+  toDateKey as toDateKeyLogic,
+} from "./reportLogic";
 
 const COLORS = {
   bg: "#F8F7F2",
@@ -33,11 +70,6 @@ const COLORS = {
   warning: "#A45F48",
 };
 
-const LOOKBACK_DAYS = 14;
-const REQUIRED_SKIN_LOG_DAYS = 7;
-const IN_PROGRESS_STATUSES = new Set(["pending", "processing"]);
-const ANALYSIS_TIMEOUT_MS_MESSAGE = "응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요.";
-const ANALYSIS_POLL_INTERVAL_MS = 6000;
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default function ReportScreen({
@@ -71,6 +103,42 @@ export default function ReportScreen({
   const [concernModalOpen, setConcernModalOpen] = useState(false);
   const [concernNote, setConcernNote] = useState("");
   const [concernModalError, setConcernModalError] = useState(null);
+
+  const [activeTrendFilter, setActiveTrendFilter] = useState("all");
+  const [comparisonData, setComparisonData] = useState(null);
+  const [loadingComparison, setLoadingComparison] = useState(false);
+  const [comparisonError, setComparisonError] = useState(false);
+
+  useEffect(() => {
+    if (!isActive || allSkinLogs.length === 0) return;
+
+    const logsWithPhotos = allSkinLogs.filter(l => l.photo_url);
+    if (logsWithPhotos.length < 2) {
+      setComparisonData(null);
+      return;
+    }
+
+    const fetchComparison = async () => {
+      setLoadingComparison(true);
+      setComparisonError(false);
+      try {
+        const afterLog = logsWithPhotos[0];
+        const beforeLog = logsWithPhotos[1];
+
+        const afterId = afterLog.id ?? afterLog.skin_log_id;
+        const beforeId = beforeLog.id ?? beforeLog.skin_log_id;
+
+        const data = await getProgressComparison(beforeId, afterId);
+        setComparisonData(data);
+      } catch (err) {
+        setComparisonError(true);
+      } finally {
+        setLoadingComparison(false);
+      }
+    };
+
+    fetchComparison();
+  }, [allSkinLogs, isActive]);
 
   const loadStats = useCallback(async (isMounted = () => true) => {
     setLoading(true);
@@ -278,7 +346,6 @@ export default function ReportScreen({
       .slice(0, 2),
     [analysisList, completedAnalysisId]
   );
-
   const handleCreateAnalysis = async (note = "") => {
     if (isCreatingAnalysis) return;
     if (!analysisReady) {
@@ -308,6 +375,14 @@ export default function ReportScreen({
       setAnalysisRequestMessage("참고 인사이트 생성을 시작했어요.");
       await refreshAnalysisList();
     } catch (error) {
+      if (error.response?.status === 403) {
+        setConcernModalOpen(false);
+        Alert.alert(
+          "오늘의 분석 한도에 도달했어요",
+          "무료 분석은 하루 3회까지 이용할 수 있어요. 내일 다시 시도해 주세요."
+        );
+        return;
+      }
       const message = getAnalysisRequestErrorMessage(error);
       setConcernModalError(message);
       if (isAnalysisRequestDuplicate(error)) {
@@ -537,7 +612,7 @@ export default function ReportScreen({
           {analysisError ? (
             <Row
               title="인사이트 정보를 불러오지 못했어요"
-              description={analysisError === "timeout" ? ANALYSIS_TIMEOUT_MS_MESSAGE : "잠시 후 다시 시도해 주세요."}
+              description={analysisError === "timeout" ? ANALYSIS_TIMEOUT_MESSAGE : "잠시 후 다시 시도해 주세요."}
               trailing="새로고침"
               onPress={() => loadStats()}
             />
@@ -592,27 +667,45 @@ export default function ReportScreen({
             </View>
           </View>
 
+          <View style={styles.trendFilterRow}>
+            {Object.entries({ all: "전체", active_lesion: "트러블", redness: "홍조", barrier: "각질" }).map(([k, label]) => (
+              <TouchableOpacity
+                key={k}
+                style={[styles.trendFilterChip, activeTrendFilter === k && styles.trendFilterChipActive]}
+                onPress={() => setActiveTrendFilter(k)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.trendFilterChipText, activeTrendFilter === k && styles.trendFilterChipTextActive]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <View style={{ marginVertical: 12 }}>
-            <SkinTrendChart data={timeline.map(dateKey => {
-              const log = allSkinLogs.find(l => toDateKey(l?.logged_at) === dateKey);
-              let active_lesion = 0;
-              let redness = 0;
-              let barrier = 0;
+            <SkinTrendChart
+              activeFilter={activeTrendFilter}
+              data={timeline.map(dateKey => {
+                const log = allSkinLogs.find(l => toDateKey(l?.logged_at) === dateKey);
+                let active_lesion = 0;
+                let redness = 0;
+                let barrier = 0;
 
-              if (log?.condition_tags) {
-                const tags = Array.isArray(log.condition_tags) ? log.condition_tags : Object.keys(log.condition_tags);
-                if (tags.some(t => t.includes('트러블') || t.includes('여드름') || t.includes('뾰루지'))) active_lesion = 1;
-                if (tags.some(t => t.includes('홍조') || t.includes('붉은'))) redness = 1;
-                if (tags.some(t => t.includes('각질') || t.includes('건조'))) barrier = 1;
-              }
+                if (log?.condition_tags) {
+                  const tags = Array.isArray(log.condition_tags) ? log.condition_tags : Object.keys(log.condition_tags);
+                  if (tags.some(t => t.includes('트러블') || t.includes('여드름') || t.includes('뾰루지'))) active_lesion = 1;
+                  if (tags.some(t => t.includes('홍조') || t.includes('붉은'))) redness = 1;
+                  if (tags.some(t => t.includes('각질') || t.includes('건조'))) barrier = 1;
+                }
 
-              return {
-                dateLabel: String(new Date(dateKey).getDate()),
-                active_lesion,
-                redness,
-                barrier
-              };
-            })} />
+                return {
+                  dateLabel: String(new Date(dateKey).getDate()),
+                  active_lesion,
+                  redness,
+                  barrier
+                };
+              })}
+            />
           </View>
 
           <View style={styles.flowStats}>
@@ -839,6 +932,71 @@ export default function ReportScreen({
     </Modal>
   );
 
+  const renderComparisonSection = () => {
+    if (loadingComparison) {
+      return (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>피부 변화 비교 (Before & After)</Text>
+          <View style={styles.group}>
+            <View style={styles.sectionLoadingPanel}>
+              <ActivityIndicator size="small" color={COLORS.olive} />
+              <Text style={styles.sectionLoadingText}>피부 사진 비교 분석을 불러오는 중...</Text>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    if (!comparisonData) {
+      return (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>피부 변화 비교 (Before & After)</Text>
+          <View style={styles.group}>
+            <View style={styles.comparisonEmpty}>
+              <Ionicons name="images-outline" size={28} color={COLORS.muted} />
+              <Text style={styles.comparisonEmptyTitle}>비교할 사진이 부족합니다</Text>
+              <Text style={styles.comparisonEmptyDesc}>사진 분석 기록이 2개 이상일 때 비교 슬라이더가 활성화됩니다.</Text>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>피부 변화 비교 (Before & After)</Text>
+        <View style={styles.group}>
+          <View style={{ marginVertical: 12 }}>
+            <SkinCompareSlider
+              beforeUri={comparisonData.before_photo_url}
+              afterUri={comparisonData.after_photo_url}
+              width={300}
+              height={300}
+            />
+          </View>
+
+          <View style={styles.compareInsightCard}>
+            <View style={styles.compareHeader}>
+              <Ionicons name="analytics" size={15} color={COLORS.olive} style={{ marginRight: 6 }} />
+              <Text style={styles.compareInsightTitle}>AI 원인 분석 해석</Text>
+            </View>
+            <Text style={styles.compareNotesText}>{comparisonData.comparison_notes}</Text>
+            {comparisonData.related_changes && comparisonData.related_changes.length > 0 && (
+              <View style={styles.compareRelatedChanges}>
+                {comparisonData.related_changes.map((change, idx) => (
+                  <View key={idx} style={styles.relatedChangeBadge}>
+                    <Ionicons name="sparkles" size={11} color="#D28C00" style={{ marginRight: 4 }} />
+                    <Text style={styles.relatedChangeText}>{change}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   const renderDetailContent = () => {
     if (detailLoading) {
       return (
@@ -932,6 +1090,7 @@ export default function ReportScreen({
           </View>
         ) : null}
 
+
         {!detail.hasPipeline && !detail.isSparseContent ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>함께 보인 항목</Text>
@@ -994,6 +1153,7 @@ export default function ReportScreen({
         {renderHero()}
         {renderInsightSection()}
         {renderRecordFlowSection()}
+        {renderComparisonSection()}
         <View style={styles.section}>
           <WeeklyNutrientCard selectedDate={effectiveBaseDateKey} />
 
@@ -1095,7 +1255,14 @@ function ActionRecommendationCard({ item, isSubmitting, onFeedback }) {
             onPress={() => onFeedback("done")}
             disabled={isSubmitting}
           >
-            <Text style={styles.actionCardFeedbackBtnText}>네, 해볼게요</Text>
+            <Text style={styles.actionCardFeedbackBtnText}>실천할게요</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.actionCardFeedbackBtn, pressed && styles.pressedItem]}
+            onPress={() => onFeedback("skipped")}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.actionCardFeedbackBtnText}>넘어갈래요</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.actionCardFeedbackBtn, pressed && styles.pressedItem]}
@@ -1134,7 +1301,18 @@ function VerdictRow({ item }) {
 function PatternRow({ item }) {
   const { label: evidenceLabel, color: evidenceColor } = getEvidenceMeta(item.evidence_level);
   const signalLabel = getSafeText(item.affected_signal_label) || getSafeText(item.affected_signal) || "";
-  const description = [getSafeText(item.pattern), signalLabel ? `영향 신호: ${signalLabel}` : ""].filter(Boolean).join(" · ");
+  const confidenceText = typeof item.confidence === "number"
+    ? (item.confidence > 0.7 ? "신뢰도 높음" : item.confidence > 0.4 ? "신뢰도 보통" : "베이스라인 차이 참고")
+    : null;
+
+  const evidenceSummary = buildPatternEvidenceSummary(item.confidence_factors);
+  const description = [
+    getSafeText(item.pattern),
+    signalLabel ? `영향 신호: ${signalLabel}` : "",
+    confidenceText,
+    evidenceSummary,
+  ].filter(Boolean).join(" · ");
+
   return (
     <View style={styles.row}>
       <View style={styles.rowText}>
@@ -1147,6 +1325,25 @@ function PatternRow({ item }) {
     </View>
   );
 }
+
+function buildPatternEvidenceSummary(factors) {
+  if (!factors || typeof factors !== "object") return "";
+
+  const parts = [];
+  const exposureCount = Number(factors.exposure_event_count);
+  const counterexampleDays = Number(factors.counterexample_days);
+  const missingRate = Number(factors.missing_rate);
+
+  if (Number.isFinite(exposureCount) && exposureCount > 0) parts.push(`노출 ${exposureCount}회`);
+  if (Number.isFinite(counterexampleDays) && counterexampleDays > 0) parts.push(`반례 ${counterexampleDays}일`);
+  if (Number.isFinite(missingRate) && missingRate > 0) {
+    parts.push(`기록 누락 ${Math.round(missingRate * 100)}%`);
+  }
+
+  return parts.join(" · ");
+}
+
+
 
 const getVerdictMeta = (verdict) => {
   const map = {
@@ -1186,191 +1383,43 @@ const buildVerdictDetail = (item) => {
   return parts.join(" · ");
 };
 
-const normalizeAnalysisList = (data) => {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.items)) return data.items;
-  return [];
-};
+const normalizeAnalysisList = normalizeAnalysisListLogic;
 
-const toDateKey = (value) => {
-  if (!value) return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return toLocalDateKey(value);
-  if (typeof value === "string") {
-    // 순수 날짜 형식(YYYY-MM-DD)이면 그대로 반환
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-    // datetime 문자열이면 로컬 타임존 기준 날짜로 변환
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? null : toLocalDateKey(d);
-  }
-  return null;
-};
+const toDateKey = toDateKeyLogic;
 
-const toLocalDateKey = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+const parseDateKey = parseDateKeyLogic;
 
-const parseDateKey = (dateKey) => {
-  if (!dateKey) return null;
-  const [year, month, day] = String(dateKey).split("-").map(Number);
-  if (!year || !month || !day) return null;
-  const date = new Date(year, month - 1, day);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
+const formatKoreanDate = formatKoreanDateLogic;
 
-const addDays = (date, amount) => {
-  const next = new Date(date);
-  next.setDate(next.getDate() + amount);
-  return next;
-};
+const isFutureDateKey = isFutureDateKeyLogic;
 
-const formatKoreanDate = (dateKey) => {
-  const date = parseDateKey(dateKey);
-  if (!date) return "오늘";
-  return `${date.getMonth() + 1}월 ${date.getDate()}일`;
-};
+const isWithinLookbackFromBase = isWithinLookbackFromBaseLogic;
 
-const isFutureDateKey = (dateKey) => {
-  const date = parseDateKey(dateKey);
-  const today = parseDateKey(toLocalDateKey(new Date()));
-  if (!date || !today) return false;
-  return date > today;
-};
+const getLookbackDateKeys = getLookbackDateKeysLogic;
 
-const isWithinLookbackFromBase = (value, baseDateKey, days) => {
-  const key = toDateKey(value);
-  const baseDate = parseDateKey(baseDateKey);
-  const target = parseDateKey(key);
-  if (!baseDate || !target) return false;
+const getCalendarDays = getCalendarDaysLogic;
 
-  const start = addDays(baseDate, -(days - 1));
-  return target >= start && target <= baseDate;
-};
+const isAnalyzableSkinLog = isAnalyzableSkinLogLogic;
 
-const getLookbackDateKeys = (baseDateKey, days) => {
-  const base = parseDateKey(baseDateKey) ?? new Date();
-  return Array.from({ length: days }, (_, index) => toLocalDateKey(addDays(base, index - (days - 1))));
-};
+const countUniqueLogDays = countUniqueLogDaysLogic;
 
-const getCalendarDays = (monthDate) => {
-  const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const start = addDays(first, -first.getDay());
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = addDays(start, index);
-    return {
-      dateKey: toLocalDateKey(date),
-      day: date.getDate(),
-      inMonth: date.getMonth() === monthDate.getMonth(),
-    };
-  });
-};
+const getTrailingRecordStreak = getTrailingRecordStreakLogic;
 
-const isAnalyzableSkinLog = (log) => log?.overall_score !== null && log?.overall_score !== undefined;
+const getLatestSkinLogOnOrBefore = getLatestSkinLogOnOrBeforeLogic;
 
-const countUniqueLogDays = (logs) => {
-  if (!Array.isArray(logs)) return 0;
-  return new Set(logs.map((log) => toDateKey(log?.logged_at)).filter(Boolean)).size;
-};
+const getLatestLogChangedAt = getLatestLogChangedAtLogic;
 
-const getTrailingRecordStreak = (dateKeys, recordDateKeys) => {
-  if (!Array.isArray(dateKeys) || !recordDateKeys) return 0;
-  let count = 0;
-  for (let index = dateKeys.length - 1; index >= 0; index -= 1) {
-    if (!recordDateKeys.has(dateKeys[index])) break;
-    count += 1;
-  }
-  return count;
-};
+const getAnalysisTimestamp = getAnalysisTimestampLogic;
 
-const getLogTime = (log) => Math.max(
-  getTimestamp(log?.updated_at),
-  getTimestamp(log?.created_at),
-  getTimestamp(log?.logged_at)
-);
+const isCompletedAnalysis = isCompletedAnalysisLogic;
 
-const getLatestSkinLogOnOrBefore = (logs, baseDateKey) => {
-  const baseDate = parseDateKey(baseDateKey);
-  if (!baseDate || !Array.isArray(logs) || logs.length === 0) return null;
-  return [...logs]
-    .filter((log) => {
-      const date = parseDateKey(toDateKey(log?.logged_at));
-      return date && date <= baseDate;
-    })
-    .sort((a, b) => getLogTime(b) - getLogTime(a))[0] ?? null;
-};
+const findCompletedAnalysis = findCompletedAnalysisLogic;
 
-const getTimestamp = (value) => {
-  if (!value) return 0;
-  const time = new Date(value).getTime();
-  return Number.isFinite(time) ? time : 0;
-};
+const getAnalysisBasisLabel = getAnalysisBasisLabelLogic;
 
-const getLatestLogChangedAt = (logs) => {
-  if (!Array.isArray(logs) || logs.length === 0) return 0;
-  return Math.max(...logs.map(getLogTime));
-};
+const getAnalysisHistoryTitle = getAnalysisHistoryTitleLogic;
 
-const getAnalysisTimestamp = (analysis) => {
-  if (!analysis) return 0;
-  const result = analysis?.result ?? analysis?.analysis_result ?? {};
-  return Math.max(
-    getTimestamp(analysis?.completed_at),
-    getTimestamp(analysis?.updated_at),
-    getTimestamp(analysis?.requested_at),
-    getTimestamp(analysis?.created_at),
-    getTimestamp(result?.created_at),
-    getTimestamp(result?.updated_at)
-  );
-};
-
-const isCompletedAnalysis = (item) => {
-  const result = item?.result ?? item?.analysis_result ?? null;
-  return item?.status === "done" || !!result;
-};
-
-const findCompletedAnalysis = (items) => items.find(isCompletedAnalysis) ?? null;
-
-const getAnalysisDateKey = (analysis) => toDateKey(
-  analysis?.base_date ??
-  analysis?.target_date ??
-  analysis?.skin_log?.logged_at ??
-  analysis?.requested_at ??
-  analysis?.created_at
-);
-
-const getAnalysisBasisLabel = (analysis) => {
-  const dateKey = getAnalysisDateKey(analysis);
-  return dateKey ? formatKoreanDate(dateKey) : "";
-};
-
-const getAnalysisHistoryTitle = (analysis) => {
-  const dateKey = getAnalysisDateKey(analysis);
-  return dateKey ? `${formatKoreanDate(dateKey)} 기준` : "이전 인사이트";
-};
-
-const getReportState = ({
-  loading,
-  isCreatingAnalysis,
-  inProgressAnalysis,
-  recentSkinLogDays,
-  completedAnalysis,
-  analysisIsStale,
-  failedAnalysis,
-  failedAnalysisIsLatest,
-  analysisReady,
-}) => {
-  if (loading) return "loading";
-  if (isCreatingAnalysis || inProgressAnalysis) return "creating";
-  if (recentSkinLogDays === 0) return "no_record";
-  if (failedAnalysis && failedAnalysisIsLatest) return "failed";
-  if (completedAnalysis && analysisIsStale) return "stale";
-  if (completedAnalysis) return "complete";
-  if (failedAnalysis) return "failed";
-  if (analysisReady) return "ready";
-  return "insufficient";
-};
+const getReportState = getReportStateLogic;
 
 const getInsightActionCopy = ({ state, reportCopy, completedAnalysis, hasCompletedAnalysis }) => {
   const analysisBasisLabel = getAnalysisBasisLabel(completedAnalysis);
@@ -1720,37 +1769,11 @@ const getNextCheckItems = (result) => {
   return candidates.slice(0, 2).map((item) => `${item.title} 흐름을 다음 기록에서도 확인해보세요.`);
 };
 
-const getErrorDetailText = (error) => {
-  const detail = error?.response?.data?.detail;
-  if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) return detail.map((item) => item?.msg ?? item?.message ?? JSON.stringify(item)).join(" ");
-  if (detail && typeof detail === "object") return detail.message ?? detail.msg ?? JSON.stringify(detail);
-  return error?.message ?? "";
-};
+const isTimeoutError = isTimeoutErrorLogic;
 
-const getNormalizedErrorText = (error) => getErrorDetailText(error).toLowerCase();
+const isAnalysisRequestDuplicate = isAnalysisRequestDuplicateLogic;
 
-const isTimeoutError = (error) => {
-  const message = String(error?.message ?? "").toLowerCase();
-  return error?.code === "ECONNABORTED" || message.includes("timeout");
-};
-
-const isAnalysisRequestDuplicate = (error) => {
-  const text = getNormalizedErrorText(error);
-  return text.includes("analysis request already exists") || text.includes("already exists");
-};
-
-const getAnalysisRequestErrorMessage = (error) => {
-  const text = getNormalizedErrorText(error);
-  const status = error?.response?.status;
-
-  if (isTimeoutError(error)) return ANALYSIS_TIMEOUT_MS_MESSAGE;
-  if (isAnalysisRequestDuplicate(error)) return "이미 만들고 있는 참고 인사이트가 있어요.";
-  if (text.includes("at least 7 skin log days are required")) return "참고 인사이트를 만들 기록이 조금 더 필요해요.";
-  if (text.includes("skin log not found") || text.includes("not found")) return "기준일 이전의 피부 기록을 찾지 못했어요.";
-  if (status === 401 || status === 403 || text.includes("token")) return "다시 로그인한 뒤 시도해 주세요.";
-  return "참고 인사이트를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.";
-};
+const getAnalysisRequestErrorMessage = getAnalysisRequestErrorMessageLogic;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
@@ -2195,5 +2218,97 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#FFFFFF",
     letterSpacing: 0,
+  },
+  trendFilterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+    gap: 6,
+  },
+  trendFilterChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trendFilterChipActive: {
+    backgroundColor: COLORS.olive,
+    borderColor: COLORS.olive,
+  },
+  trendFilterChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  trendFilterChipTextActive: {
+    color: '#FFFFFF',
+  },
+  comparisonEmpty: {
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  comparisonEmptyTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  comparisonEmptyDesc: {
+    fontSize: 12,
+    color: COLORS.muted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  compareInsightCard: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.line,
+  },
+  compareHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  compareInsightTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: COLORS.olive,
+  },
+  compareNotesText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: COLORS.text,
+  },
+  compareRelatedChanges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.line,
+    paddingTop: 10,
+  },
+  relatedChangeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFDE7',
+    borderWidth: 1,
+    borderColor: '#FFF59D',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  relatedChangeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.text,
   },
 });

@@ -4,7 +4,23 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any, Callable
 
-from app.services.period_cycle_service import DEFAULT_CYCLE_LENGTH, _resolve_phase
+from app.services.pattern_timeline import (
+    attach_cosmetic_ingredient_group_exposures,
+    attach_period_phases,
+    baseline_exclusion_dates,
+    direction_consistency,
+    extract_skin_signals,
+    filter_timeline_from,
+    lag_target_dates,
+    normalize_timeline,
+)
+from app.services.pattern_scoring import (
+    confidence as calculate_confidence,
+    confidence_factors as calculate_confidence_factors,
+    counterexample_days,
+    evidence_level as calculate_evidence_level,
+    missing_rate,
+)
 
 
 MIN_STRONG_EXPOSURE_DAYS = 3
@@ -688,106 +704,29 @@ def _attach_confounder_notes(patterns: list[dict[str, Any]]) -> None:
 # ---------------------------------------------------------------------------
 
 def _extract_skin_signals(skin: dict[str, Any]) -> dict[str, float]:
-    """MedGemma 신호를 분석용 float으로 변환. 부호 반전: 높을수록 좋음 컨벤션 유지."""
-    medgemma = skin.get("medgemma") or {}
-    signals = medgemma.get("signals") or {}
-    if not signals:
-        return {}
-    result: dict[str, float] = {}
-    for key in ("active_lesion", "redness", "barrier"):
-        val = signals.get(key)
-        if isinstance(val, (int, float)):
-            result[key] = -float(val)
-    return result
-
+    """Compatibility shim for concern_verdict_service."""
+    return extract_skin_signals(skin)
 
 def _normalized_timeline(timeline: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    result = []
-    for day in timeline:
-        logged_date = _parse_date(day.get("date"))
-        if logged_date is None:
-            continue
-        skin = day.get("skin") or {}
-        result.append(
-            {
-                **day,
-                "date": logged_date,
-                "score": _safe_float(skin.get("overall_score")),
-                "signals": _extract_skin_signals(skin),
-            }
-        )
-    return sorted(result, key=lambda item: item["date"])
+    return normalize_timeline(timeline)
 
 
 def _filter_timeline_from(
     timeline: list[dict[str, Any]],
     start_date: date | None,
 ) -> list[dict[str, Any]]:
-    if start_date is None:
-        return timeline
-    return [day for day in timeline if day["date"] >= start_date]
+    return filter_timeline_from(timeline, start_date)
 
 
 def _attach_period_phases(timeline: list[dict[str, Any]], period_logs: list[dict[str, Any]]) -> None:
-    starts = sorted(
-        started_at
-        for item in period_logs
-        if (started_at := _parse_date(item.get("started_at"))) is not None
-    )
-    if not starts:
-        return
-    for day in timeline:
-        last_start = _last_period_start_on_or_before(starts, day["date"])
-        if last_start is None:
-            continue
-        cycle_day = (day["date"] - last_start).days + 1
-        phase, phase_label = _resolve_phase(cycle_day, DEFAULT_CYCLE_LENGTH)
-        day["period_phase"] = phase
-        day["period_phase_label"] = phase_label
-        day["period_cycle_day"] = cycle_day
-
-
-def _last_period_start_on_or_before(starts: list[date], target_date: date) -> date | None:
-    candidates = [started_at for started_at in starts if started_at <= target_date]
-    return candidates[-1] if candidates else None
+    attach_period_phases(timeline, period_logs)
 
 
 def _attach_cosmetic_ingredient_group_exposures(
     timeline: list[dict[str, Any]],
     current_cosmetics: list[dict[str, Any]],
 ) -> None:
-    by_date = {day["date"]: day for day in timeline}
-    for cosmetic in current_cosmetics:
-        started_at = _parse_date(cosmetic.get("started_at"))
-        if started_at is None or started_at not in by_date:
-            continue
-        day = by_date[started_at]
-        _extend_unique(day, "cosmetic_irritant_ingredients", cosmetic.get("irritant_ingredients") or [])
-        _extend_unique(
-            day,
-            "cosmetic_high_comedogenic_ingredients",
-            cosmetic.get("high_comedogenic_ingredients") or [],
-        )
-        _extend_unique(
-            day,
-            "cosmetic_functional_ingredients",
-            cosmetic.get("functional_ingredients") or [],
-        )
-        _extend_unique(
-            day,
-            "cosmetic_ingredient_groups",
-            cosmetic.get("ingredient_groups") or [],
-        )
-
-
-def _extend_unique(target: dict[str, Any], key: str, values: list[Any]) -> None:
-    if not values:
-        return
-    existing = list(target.get(key) or [])
-    for value in values:
-        if value not in existing:
-            existing.append(value)
-    target[key] = existing
+    attach_cosmetic_ingredient_group_exposures(timeline, current_cosmetics)
 
 
 def _lag_target_dates(
@@ -796,13 +735,7 @@ def _lag_target_dates(
     lag_max_days: int,
     score_by_date: dict[date, float],
 ) -> set[date]:
-    targets = set()
-    for exposure_date in exposure_dates:
-        for offset in range(lag_min_days, lag_max_days + 1):
-            target_date = exposure_date + timedelta(days=offset)
-            if target_date in score_by_date:
-                targets.add(target_date)
-    return targets
+    return lag_target_dates(exposure_dates, lag_min_days, lag_max_days, score_by_date)
 
 
 def _direction_consistency(
@@ -813,23 +746,17 @@ def _direction_consistency(
     score_by_date: dict[date, float],
     comparison_avg: float,
 ) -> float:
-    event_averages = []
-    for exposure_date in exposure_dates:
-        scores = [
-            score_by_date[target_date]
-            for offset in range(lag_min_days, lag_max_days + 1)
-            if (target_date := exposure_date + timedelta(days=offset)) in score_by_date
-        ]
-        if scores:
-            event_averages.append(_average(scores))
-    if not event_averages:
-        return 0.0
-    consistent_count = sum(event_avg < comparison_avg for event_avg in event_averages)
-    return round(consistent_count / len(event_averages), 2)
+    return direction_consistency(
+        exposure_dates=exposure_dates,
+        lag_min_days=lag_min_days,
+        lag_max_days=lag_max_days,
+        score_by_date=score_by_date,
+        comparison_avg=comparison_avg,
+    )
 
 
 def _baseline_exclusion_dates(trigger_day: date) -> set[date]:
-    return {trigger_day - timedelta(days=offset) for offset in range(0, 4)}
+    return baseline_exclusion_dates(trigger_day)
 
 
 def _evidence_level(
@@ -839,21 +766,12 @@ def _evidence_level(
     effect_size: float,
     direction_consistency: float,
 ) -> str:
-    if (
-        exposure_days >= MIN_STRONG_EXPOSURE_DAYS
-        and comparison_days >= MIN_STRONG_COMPARISON_DAYS
-        and effect_size >= STRONG_EFFECT_SIZE
-        and direction_consistency >= STRONG_DIRECTION_CONSISTENCY
-    ):
-        return "strong"
-    if (
-        exposure_days >= MIN_MODERATE_EXPOSURE_DAYS
-        and comparison_days >= MIN_MODERATE_COMPARISON_DAYS
-        and effect_size >= MODERATE_EFFECT_SIZE
-        and direction_consistency >= MODERATE_DIRECTION_CONSISTENCY
-    ):
-        return "moderate"
-    return "weak"
+    return calculate_evidence_level(
+        exposure_days=exposure_days,
+        comparison_days=comparison_days,
+        effect_size=effect_size,
+        direction_consistency=direction_consistency,
+    )
 
 
 def _confidence(
@@ -862,34 +780,7 @@ def _confidence(
     direction_consistency: float,
     factors: dict[str, Any] | None = None,
 ) -> float:
-    base = {
-        "strong": 0.75,
-        "moderate": 0.55,
-        "weak": 0.25,
-    }[evidence_level]
-    confidence = base + max(0.0, effect_size) * 0.05 + direction_consistency * 0.05
-    if factors:
-        exposure_count = int(factors.get("exposure_event_count") or 0)
-        counterexamples = int(factors.get("counterexample_days") or 0)
-        if exposure_count > 0 and counterexamples >= exposure_count:
-            return 0.0
-
-        missing_rate = factors.get("missing_rate")
-        if isinstance(missing_rate, (int, float)):
-            confidence -= float(missing_rate) * 0.25
-            if missing_rate > 0.5:
-                confidence = min(confidence, 0.3)
-
-        concurrent_avg = factors.get("concurrent_exposure_avg")
-        if isinstance(concurrent_avg, (int, float)):
-            confidence -= min(float(concurrent_avg), 3.0) * 0.05
-
-        if exposure_count:
-            counterexample_ratio = counterexamples / max(exposure_count + counterexamples, 1)
-            confidence -= counterexample_ratio * 0.3
-            confidence += min(exposure_count / 5, 1.0) * 0.08
-
-    return round(max(0.0, min(0.95, confidence)), 2)
+    return calculate_confidence(evidence_level, effect_size, direction_consistency, factors)
 
 
 def _confidence_factors(
@@ -904,29 +795,26 @@ def _confidence_factors(
     effect_size: float,
     direction_consistency: float,
 ) -> dict[str, Any]:
-    return {
-        "exposure_event_count": len(exposure_dates),
-        "baseline_change": max(0.0, round(effect_size, 2)),
-        "counterexample_days": _counterexample_days(comparison_scores, exposed_avg),
-        "missing_rate": _missing_rate(score_by_date),
-        "concurrent_exposure_avg": _concurrent_exposure_avg(definition, timeline, exposure_dates),
-        "lag_target_days": len(lag_target_dates),
-        "direction_consistency": direction_consistency,
-    }
+    return calculate_confidence_factors(
+        definition=definition,
+        definitions=MVP_PATTERN_DEFINITIONS,
+        timeline=timeline,
+        exposure_dates=exposure_dates,
+        score_by_date=score_by_date,
+        lag_target_dates=lag_target_dates,
+        exposed_avg=exposed_avg,
+        comparison_scores=comparison_scores,
+        effect_size=effect_size,
+        direction_consistency=direction_consistency,
+    )
 
 
 def _counterexample_days(comparison_scores: list[float], exposed_avg: float) -> int:
-    return sum(1 for score in comparison_scores if score <= exposed_avg)
+    return counterexample_days(comparison_scores, exposed_avg)
 
 
 def _missing_rate(score_by_date: dict[date, float]) -> float | None:
-    if not score_by_date:
-        return None
-    dates = sorted(score_by_date)
-    expected_days = (dates[-1] - dates[0]).days + 1
-    if expected_days <= 0:
-        return 0.0
-    return round(1 - (len(score_by_date) / expected_days), 2)
+    return missing_rate(score_by_date)
 
 
 def _concurrent_exposure_avg(

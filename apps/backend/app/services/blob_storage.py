@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 from abc import ABC, abstractmethod
+from pathlib import Path, PurePosixPath
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -118,8 +119,13 @@ class LocalStorageProvider(StorageProviderInterface):
         blob_url = normalize_blob_storage_url(blob_url) or ""
         if not blob_url.startswith("/static/"):
             return None
-        relative_path = blob_url[len("/static/"):].replace("/", os.sep)
-        return os.path.join(self.root, relative_path)
+        root = Path(self.root).resolve()
+        candidate = (root / blob_url[len("/static/"):].replace("/", os.sep)).resolve()
+        try:
+            candidate.relative_to(root)
+        except ValueError:
+            return None
+        return str(candidate)
 
     def build_url(self, container_name: str, blob_name: str) -> str:
         return f"/static/{container_name}/{blob_name}"
@@ -165,9 +171,14 @@ class LocalStorageProvider(StorageProviderInterface):
 class S3StorageProvider(StorageProviderInterface):
     def _key(self, blob_url: Optional[str]) -> Optional[str]:
         blob_url = normalize_blob_storage_url(blob_url) or ""
+        blob_url = blob_url.split("?", 1)[0]
         if not blob_url.startswith("/static/"):
             return None
-        return blob_url[len("/static/"):]
+        key = blob_url[len("/static/"):]
+        path = PurePosixPath(key)
+        if not key or path.is_absolute() or ".." in path.parts:
+            return None
+        return str(path)
 
     def build_url(self, container_name: str, blob_name: str) -> str:
         base = _s3_public_base()
@@ -255,7 +266,14 @@ def delete_blob(blob_url: Optional[str]) -> None:
 def delete_blobs(blob_urls: list[Optional[str]]) -> None:
     provider = get_storage_provider()
     for url in blob_urls:
-        provider.delete(url)
+        if not url:
+            continue
+        try:
+            provider.delete(url)
+        except Exception as exc:
+            parsed = urlparse(url)
+            safe_url = parsed.path or url.split("?", 1)[0]
+            logger.error("Failed to delete blob path %s: %s", safe_url, exc)
 
 
 def sign_blob_read_url(blob_url: Optional[str]) -> Optional[str]:
